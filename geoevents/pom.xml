@@ -37,12 +37,13 @@
     </repositories>
 
     <dependencies>
+        <!-- geohash library from clojars -->
         <dependency>
-            <groupId>org.elasticsoftware.elasticactors</groupId>
-            <artifactId>elasticactors-test</artifactId>
-            <version>${elasticactors.version}</version>
-            <scope>test</scope>
+            <groupId>org.clojars.ndimiduk</groupId>
+            <artifactId>geohash-java</artifactId>
+            <version>1.0.6</version>
         </dependency>
+
         <dependency>
             <groupId>org.elasticsoftware.elasticactors</groupId>
             <artifactId>elasticactors-api</artifactId>
@@ -53,12 +54,11 @@
             <artifactId>elasticactors-base</artifactId>
             <version>${elasticactors.version}</version>
         </dependency>
-
-        <!-- geohash library from clojars -->
         <dependency>
-            <groupId>org.clojars.ndimiduk</groupId>
-            <artifactId>geohash-java</artifactId>
-            <version>1.0.6</version>
+            <groupId>org.elasticsoftware.elasticactors</groupId>
+            <artifactId>elasticactors-test</artifactId>
+            <version>${elasticactors.version}</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 </project>
