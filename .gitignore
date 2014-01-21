@@ -4,3 +4,17 @@
 *.jar
 *.war
 *.ear
+
+# IntelliJ
+.idea/
+*.iml
+
+# Eclipse
+.classpath
+.project
+.settings
+
+# Other stuff
+*.bat
+base\target/
+examples\target/
