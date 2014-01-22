@@ -1,4 +1,6 @@
 *.class
+geoevents/target/
+http/target/
 
 # Package Files #
 *.jar
@@ -11,5 +13,3 @@
 
 # Other stuff
 *.bat
-geoevents\target/
-http\target/
