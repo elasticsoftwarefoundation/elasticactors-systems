@@ -9,12 +9,7 @@
 .idea/
 *.iml
 
-# Eclipse
-.classpath
-.project
-.settings
-
 # Other stuff
 *.bat
-base\target/
-examples\target/
+geoevents\target/
+http\target/

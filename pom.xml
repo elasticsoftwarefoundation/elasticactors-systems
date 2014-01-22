@@ -17,7 +17,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.elasticsoftware.elasticactors</groupId>
+    <groupId>org.elasticsoftware.elasticactors-systems</groupId>
     <artifactId>elasticactors-systems</artifactId>
     <version>0.1.1-SNAPSHOT</version>
     <packaging>pom</packaging>
@@ -51,8 +51,8 @@
     <distributionManagement>
         <repository>
             <id>bintray</id>
-            <name>elasticsoftwarefoundation-maven-org.elasticsoftware.elasticactors</name>
-            <url>https://api.bintray.com/maven/elasticsoftwarefoundation/maven/org.elasticsoftware.elasticactors</url>
+            <name>elasticsoftwarefoundation-maven-org.elasticsoftware.elasticactors-systems</name>
+            <url>https://api.bintray.com/maven/elasticsoftwarefoundation/maven/org.elasticsoftware.elasticactors-systems</url>
         </repository>
     </distributionManagement>
 
