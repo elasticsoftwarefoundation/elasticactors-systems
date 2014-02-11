@@ -7,8 +7,6 @@ import com.google.common.hash.Hashing;
 import org.elasticsoftware.elasticactors.*;
 import org.elasticsoftware.elasticactors.base.serialization.JacksonSerializationFramework;
 import org.elasticsoftware.elasticactors.broadcast.messages.Add;
-import org.elasticsoftware.elasticactors.broadcast.messages.Add;
-import org.elasticsoftware.elasticactors.broadcast.messages.Remove;
 import org.elasticsoftware.elasticactors.broadcast.messages.Remove;
 import org.elasticsoftware.elasticactors.broadcast.state.BroadcasterState;
 import org.elasticsoftware.elasticactors.state.PersistenceConfig;
@@ -95,7 +93,7 @@ public final class Broadcaster extends MethodActor {
     private Multimap<String, ActorRef> mapToBucket(Set<ActorRef> members, List<String> nodeIds) {
         Multimap<String,ActorRef> sendMap = ArrayListMultimap.create();
         for (ActorRef actorRef : members) {
-            int idx = Math.abs(Hashing.murmur3_32().hashString(format("%s:%s",getSelf().getActorId(),actorRef.toString()), Charsets.UTF_8).asInt()) % nodeIds.size();
+            int idx = Math.abs(Hashing.murmur3_32().hashString(format("%s:%s", getSelf().getActorId(), actorRef.toString()), Charsets.UTF_8).asInt()) % nodeIds.size();
             sendMap.put(nodeIds.get(idx), actorRef);
         }
         return sendMap;
