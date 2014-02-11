@@ -1,6 +1,5 @@
 *.class
-geoevents/target/
-http/target/
+target/
 
 # Package Files #
 *.jar
