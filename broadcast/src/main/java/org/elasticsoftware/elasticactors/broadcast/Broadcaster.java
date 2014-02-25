@@ -44,6 +44,8 @@ public final class Broadcaster extends MethodActor {
             for (ActorRef actorRef : sendMap.keys()) {
                 actorRef.tell(new Remove(sendMap.get(actorRef)),getSelf());
             }
+            // this is an approximation
+            state.decrementSize(remove.getMembers().size());
         }
     }
 
@@ -63,6 +65,8 @@ public final class Broadcaster extends MethodActor {
             for (ActorRef actorRef : sendMap.asMap().keySet()) {
                 actorRef.tell(new Add(sendMap.get(actorRef)),getSelf());
             }
+            // this is an approximation!
+            state.incrementSize(add.getMembers().size());
         }
     }
 
@@ -113,6 +117,8 @@ public final class Broadcaster extends MethodActor {
             ActorRef actorRef = actorSystem.actorOf(actorId,Broadcaster.class,new BroadcasterState(state.getBucketsPerNode(),state.getBucketSize(),sendMap.get(actorId)));
             state.getNodes().add(actorRef);
         }
+        // store size
+        state.incrementSize(state.getLeaves().size());
         // clear leaves
         state.getLeaves().clear();
         state.setLeafNode(false);

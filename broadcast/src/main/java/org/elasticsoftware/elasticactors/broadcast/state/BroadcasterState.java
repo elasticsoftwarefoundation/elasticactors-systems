@@ -20,6 +20,7 @@ public final class BroadcasterState extends JacksonActorState<BroadcasterState> 
     private final List<ActorRef> nodes;
     private final Set<ActorRef> leaves;
     private boolean leafNode = true;
+    private int size = 0;
 
     public BroadcasterState(int bucketsPerNode, int bucketSize) {
         this.bucketsPerNode = bucketsPerNode;
@@ -33,17 +34,20 @@ public final class BroadcasterState extends JacksonActorState<BroadcasterState> 
         this.bucketSize = bucketSize;
         this.leaves = Sets.newHashSet(leaves);
         this.nodes = new LinkedList<>();
+        this.size = this.leaves.size();
     }
 
     @JsonCreator
     public BroadcasterState(@JsonProperty("bucketsPerNode") int bucketsPerNode,
                             @JsonProperty("bucketSize") int bucketSize,
                             @JsonProperty("nodes") List<ActorRef> nodes,
-                            @JsonProperty("leaves") Set<ActorRef> leaves) {
+                            @JsonProperty("leaves") Set<ActorRef> leaves,
+                            @JsonProperty("size") int size) {
         this.bucketsPerNode = bucketsPerNode;
         this.bucketSize = bucketSize;
         this.nodes = nodes;
         this.leaves = leaves;
+        this.size = size;
     }
 
     @Override
@@ -73,5 +77,17 @@ public final class BroadcasterState extends JacksonActorState<BroadcasterState> 
 
     public Set<ActorRef> getLeaves() {
         return leaves;
+    }
+
+    public int getSize() {
+        return leafNode ? leaves.size() : size;
+    }
+
+    public void incrementSize(int increment) {
+        size += increment;
+    }
+
+    public void decrementSize(int decrement) {
+        size -= decrement;
     }
 }
