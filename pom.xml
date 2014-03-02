@@ -19,7 +19,7 @@
 
     <groupId>org.elasticsoftware.elasticactors-systems</groupId>
     <artifactId>elasticactors-systems</artifactId>
-    <version>0.3.1-SNAPSHOT</version>
+    <version>0.3.1</version>
     <packaging>pom</packaging>
     <name>Elastic Software Foundation :: ElasticActors :: ElasticSystems</name>
     <url>https://github.com/elasticsoftwarefoundation/elasticactors-systems</url>
@@ -42,7 +42,7 @@
             scm:git:git@github.com:elasticsoftwarefoundation/elasticactors-systems.git
         </developerConnection>
         <url>https://github.com/elasticsoftwarefoundation/elasticactors-systems</url>
-        <tag>HEAD</tag>
+        <tag>v0.3.1</tag>
     </scm>
 
     <!--
