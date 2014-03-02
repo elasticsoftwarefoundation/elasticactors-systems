@@ -62,7 +62,7 @@ public class BroadcastActorSystemTest {
         final CountDownLatch waitLatch = new CountDownLatch(NUM_SESSIONS);
 
         // reply actor
-        ActorRef replyActor = broadcastActorSystem.tempActorOf(ReplyActor.class, new ActorDelegate<Hello>() {
+        ActorRef replyActor = broadcastActorSystem.tempActorOf(ReplyActor.class, new ActorDelegate<Hello>(false) {
             @Override
             public ActorDelegate<Hello> getBody() {
                 return this;
