@@ -80,7 +80,9 @@ public abstract class MasterService extends MethodActor implements ClusterEventL
 
     @Override
     public final void onReceive(ActorRef sender, Object message) throws Exception {
-        if(masterRef != null && !masterRef.equals(self)) {
+        if(message instanceof MasterElected) {
+            handleMasterElected((MasterElected) message);
+        } else if(masterRef != null && !masterRef.equals(self)) {
             // forward the message to the master service
             masterRef.tell(message,sender);
         } else {
@@ -89,8 +91,7 @@ public abstract class MasterService extends MethodActor implements ClusterEventL
         }
     }
 
-    @MessageHandler
-    public final void handleMasterElected(MasterElected masterElected) throws Exception {
+    private final void handleMasterElected(MasterElected masterElected) throws Exception {
         this.masterRef = actorSystem.serviceActorFor(masterElected.getId(),getServiceActorName());
         onMasterElected(masterElected.isLocal());
     }
