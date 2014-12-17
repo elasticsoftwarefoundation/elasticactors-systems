@@ -13,8 +13,8 @@ import java.util.Set;
 /**
  * @author Joost van de Wijgerd
  */
-@Message(serializationFramework = JacksonSerializationFramework.class, durable = true)
-public class Remove {
+@Message(serializationFramework = JacksonSerializationFramework.class, durable = true, immutable = true)
+public final class Remove {
     private final Set<ActorRef> members;
 
     public Remove(Collection<ActorRef> members) {

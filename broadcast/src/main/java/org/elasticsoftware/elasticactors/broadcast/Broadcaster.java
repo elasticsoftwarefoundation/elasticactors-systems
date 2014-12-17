@@ -3,25 +3,30 @@ package org.elasticsoftware.elasticactors.broadcast;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Sets;
 import com.google.common.hash.Hashing;
 import org.elasticsoftware.elasticactors.*;
 import org.elasticsoftware.elasticactors.base.serialization.JacksonSerializationFramework;
-import org.elasticsoftware.elasticactors.broadcast.messages.Add;
-import org.elasticsoftware.elasticactors.broadcast.messages.Remove;
+import org.elasticsoftware.elasticactors.broadcast.messages.*;
 import org.elasticsoftware.elasticactors.broadcast.state.BroadcasterState;
+import org.elasticsoftware.elasticactors.broadcast.state.ThrottleConfig;
+import org.elasticsoftware.elasticactors.broadcast.state.ThrottledBroadcastSession;
 import org.elasticsoftware.elasticactors.state.PersistenceConfig;
 
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
+import static com.google.common.collect.Sets.newHashSet;
 import static java.lang.String.format;
+import static org.elasticsoftware.elasticactors.state.ActorLifecycleStep.CREATE;
 
 /**
  * @author Joost van de Wijgerd
  */
 @Actor(stateClass = BroadcasterState.class, serializationFramework = JacksonSerializationFramework.class)
-@PersistenceConfig(persistOnMessages = false, included = {Add.class, Remove.class})
+@PersistenceConfig(persistOnMessages = false, included = {Add.class, Remove.class, UpdateThrottleConfig.class}, persistOn = {CREATE})
 public final class Broadcaster extends MethodActor {
 
     @Override
@@ -70,6 +75,61 @@ public final class Broadcaster extends MethodActor {
         }
     }
 
+    @MessageHandler
+    public void handleUpdateThrottleConfig(UpdateThrottleConfig updateThrottleConfig, BroadcasterState state) {
+        state.setThrottleConfig(updateThrottleConfig.getThrottleConfig());
+    }
+
+    @MessageHandler
+    public void handleLeafNodesRequest(LeafNodesRequest request,BroadcasterState state, ActorRef parent) {
+        if(state.isLeafNode()) {
+            // return ourselves
+            parent.tell(new LeafNodesResponse(request.getBroadcastId(), newHashSet(getSelf())));
+        } else {
+            // start a session (so we know when to return the response to the parent node)
+            state.addThrottledBroadcastSession(new ThrottledBroadcastSession(request.getBroadcastId(),parent));
+            // forward the request to the other nodes
+            for (ActorRef actorRef : state.getNodes()) {
+                actorRef.tell(request,getSelf());
+            }
+        }
+    }
+
+    @MessageHandler
+    public void handleLeafNodesResponse(LeafNodesResponse response, BroadcasterState state, ActorSystem actorSystem, ActorRef child) {
+        // the the throttling session
+        ThrottledBroadcastSession session = state.getThrottledBroadcastSession(response.getBroadcastId());
+        if(session != null) {
+            session.handleLeafNodesResponse(response);
+            if(session.isReady(state.getNodes().size())) {
+                // if the parent is set, create a new response and send it up the chain
+                if(session.getParent() != null) {
+                    session.getParent().tell(new LeafNodesResponse(session.getId(),session.getLeafNodes()));
+                } else {
+                    // this is the actual throttling action
+                    throttle(session, state, actorSystem);
+                }
+                // and clear the session
+                state.removeThrottledBroadcastSession(session.getId());
+            }
+        }
+    }
+
+    private void throttle(ThrottledBroadcastSession session, BroadcasterState state, ActorSystem actorSystem) {
+        // first calculate the delay
+        int maxPerSecond = state.getThrottleConfig().getMaxMessagesPerSecond();
+        int maxPerBatch = state.getBucketSize();
+
+        long delayInMillis = (1000 / maxPerSecond) * maxPerBatch;
+
+        // now schedule the delays
+        long count = 0;
+        for (ActorRef leafNode : session.getLeafNodes()) {
+            actorSystem.getScheduler().scheduleOnce(session.getSender(), session.getMessage(), leafNode, (count * delayInMillis), TimeUnit.MILLISECONDS);
+            count += 1;
+        }
+    }
+
     @Override
     protected void onUnhandled(ActorRef sender, Object message) {
         BroadcasterState state = getState(BroadcasterState.class);
@@ -79,8 +139,21 @@ public final class Broadcaster extends MethodActor {
                 actorRef.tell(message,sender);
             }
         } else {
-            for (ActorRef actorRef : state.getNodes()) {
-                actorRef.tell(message,sender);
+            // see if we have a throttle config set
+            if(state.getThrottleConfig() != null) {
+                // create a new throttle session
+                ThrottledBroadcastSession throttledBroadcastSession = new ThrottledBroadcastSession(message, sender);
+                state.addThrottledBroadcastSession(throttledBroadcastSession);
+                // and send a request to the nodes
+                LeafNodesRequest request = new LeafNodesRequest(throttledBroadcastSession.getId());
+                for (ActorRef actorRef : state.getNodes()) {
+                    actorRef.tell(request, getSelf());
+                }
+            } else {
+                // just broadcast
+                for (ActorRef actorRef : state.getNodes()) {
+                    actorRef.tell(message, sender);
+                }
             }
         }
     }
