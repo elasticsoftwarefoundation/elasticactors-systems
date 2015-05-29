@@ -97,7 +97,7 @@ public final class Broadcaster extends MethodActor {
 
     @MessageHandler
     public void handleLeafNodesResponse(LeafNodesResponse response, BroadcasterState state, ActorSystem actorSystem, ActorRef child) {
-        // the the throttling session
+        // the throttling session
         ThrottledBroadcastSession session = state.getThrottledBroadcastSession(response.getBroadcastId());
         if(session != null) {
             session.handleLeafNodesResponse(response);
@@ -117,7 +117,7 @@ public final class Broadcaster extends MethodActor {
 
     private void throttle(ThrottledBroadcastSession session, BroadcasterState state, ActorSystem actorSystem) {
         // first calculate the delay
-        int maxPerSecond = state.getThrottleConfig().getMaxMessagesPerSecond();
+        int maxPerSecond = session.getThrottleConfig().getMaxMessagesPerSecond();
         int maxPerBatch = state.getBucketSize();
 
         long delayInMillis = (1000 / maxPerSecond) * maxPerBatch;
@@ -142,7 +142,7 @@ public final class Broadcaster extends MethodActor {
             // see if we have a throttle config set
             if(state.getThrottleConfig() != null) {
                 // create a new throttle session
-                ThrottledBroadcastSession throttledBroadcastSession = new ThrottledBroadcastSession(message, sender);
+                ThrottledBroadcastSession throttledBroadcastSession = new ThrottledBroadcastSession(message, sender, state.getThrottleConfig());
                 state.addThrottledBroadcastSession(throttledBroadcastSession);
                 // and send a request to the nodes
                 LeafNodesRequest request = new LeafNodesRequest(throttledBroadcastSession.getId());

@@ -17,20 +17,22 @@ public final class ThrottledBroadcastSession {
     private final Object message;
     private final ActorRef sender;
     private final Set<ActorRef> leafNodes = newHashSet();
+    private final ThrottleConfig throttleConfig;
     private int receivedResponses = 0;
 
-    public ThrottledBroadcastSession(Object message, ActorRef sender) {
-        this(UUID.randomUUID().toString(), message, sender);
+    public ThrottledBroadcastSession(Object message, ActorRef sender, ThrottleConfig throttleConfig) {
+        this(UUID.randomUUID().toString(), message, sender, throttleConfig);
     }
 
     public ThrottledBroadcastSession(ActorRef parent) {
         this(UUID.randomUUID().toString(), parent);
     }
 
-    public ThrottledBroadcastSession(String id, Object message, ActorRef sender) {
+    public ThrottledBroadcastSession(String id, Object message, ActorRef sender, ThrottleConfig throttleConfig) {
         this.id = id;
         this.message = message;
         this.sender = sender;
+        this.throttleConfig = throttleConfig;
         this.parent = null;
     }
 
@@ -39,6 +41,7 @@ public final class ThrottledBroadcastSession {
         this.parent = parent;
         this.message = null;
         this.sender = null;
+        this.throttleConfig = null;
     }
 
     public String getId() {
@@ -72,4 +75,7 @@ public final class ThrottledBroadcastSession {
         return (numberOfNodes == receivedResponses);
     }
 
+    public ThrottleConfig getThrottleConfig() {
+        return throttleConfig;
+    }
 }
