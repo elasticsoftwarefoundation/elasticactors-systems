@@ -3,15 +3,16 @@ package org.elasticsoftware.elasticactors.broadcast;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
-import com.google.common.collect.Sets;
 import com.google.common.hash.Hashing;
+import org.apache.log4j.Logger;
 import org.elasticsoftware.elasticactors.*;
 import org.elasticsoftware.elasticactors.base.serialization.JacksonSerializationFramework;
 import org.elasticsoftware.elasticactors.broadcast.messages.*;
 import org.elasticsoftware.elasticactors.broadcast.state.BroadcasterState;
-import org.elasticsoftware.elasticactors.broadcast.state.ThrottleConfig;
 import org.elasticsoftware.elasticactors.broadcast.state.ThrottledBroadcastSession;
 import org.elasticsoftware.elasticactors.state.PersistenceConfig;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Configurable;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -27,7 +28,10 @@ import static org.elasticsoftware.elasticactors.state.ActorLifecycleStep.CREATE;
  */
 @Actor(stateClass = BroadcasterState.class, serializationFramework = JacksonSerializationFramework.class)
 @PersistenceConfig(persistOnMessages = false, included = {Add.class, Remove.class, UpdateThrottleConfig.class}, persistOn = {CREATE})
+@Configurable
 public final class Broadcaster extends MethodActor {
+    private static final Logger logger = Logger.getLogger(Broadcaster.class);
+    private JacksonSerializationFramework serializationFramework;
 
     @Override
     public void postCreate(ActorRef creator) throws Exception {
@@ -36,6 +40,16 @@ public final class Broadcaster extends MethodActor {
         if(state.getLeaves().size() > state.getBucketSize()) {
             rehash(state);
         }
+    }
+
+    @Override
+    public void postActivate(String previousVersion) throws Exception {
+
+    }
+
+    @Autowired
+    public void setSerializationFramework(JacksonSerializationFramework serializationFramework) {
+        this.serializationFramework = serializationFramework;
     }
 
     @MessageHandler
@@ -115,6 +129,21 @@ public final class Broadcaster extends MethodActor {
         }
     }
 
+    @MessageHandler
+    public void handleThrottledMessage(ThrottledMessage message) {
+        try {
+            // build up the original message
+            Class messageClass = Class.forName(message.getMessageClass());
+
+            Object originalMessage = serializationFramework.getObjectMapper().readValue(message.getMessageData(), messageClass);
+
+            // delegate to onUnhandled
+            onUnhandled(message.getSender(), originalMessage);
+        } catch(Exception e) {
+            logger.error(String.format("Unexpected Exception scheduling throttled message of type [%s] from sender [%s]", message.getMessageClass(), message.getSender().toString()), e);
+        }
+    }
+
     private void throttle(ThrottledBroadcastSession session, BroadcasterState state, ActorSystem actorSystem) {
         // first calculate the delay
         int maxPerSecond = session.getThrottleConfig().getMaxMessagesPerSecond();
@@ -122,11 +151,20 @@ public final class Broadcaster extends MethodActor {
 
         long delayInMillis = (1000 / maxPerSecond) * maxPerBatch;
 
-        // now schedule the delays
-        long count = 0;
-        for (ActorRef leafNode : session.getLeafNodes()) {
-            actorSystem.getScheduler().scheduleOnce(session.getSender(), session.getMessage(), leafNode, (count * delayInMillis), TimeUnit.MILLISECONDS);
-            count += 1;
+        try {
+            // serialize the original message
+            String messageData = serializationFramework.getObjectMapper().writeValueAsString(session.getMessage());
+
+            ThrottledMessage message = new ThrottledMessage(session.getSender(), session.getMessage().getClass().getName(), messageData);
+
+            // now schedule the delays
+            long count = 0;
+            for (ActorRef leafNode : session.getLeafNodes()) {
+                actorSystem.getScheduler().scheduleOnce(getSelf(), message, leafNode, (count * delayInMillis), TimeUnit.MILLISECONDS);
+                count += 1;
+            }
+        } catch(Exception e) {
+            logger.error(String.format("Unexpected Exception scheduling throttled message of type [%s] from sender [%s]", session.getMessage().getClass().getName(), session.getSender().toString()), e);
         }
     }
 
