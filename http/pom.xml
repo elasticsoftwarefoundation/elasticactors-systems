@@ -19,7 +19,7 @@
     <parent>
         <artifactId>elasticactors-systems</artifactId>
         <groupId>org.elasticsoftware.elasticactors-systems</groupId>
-        <version>0.6.1-SNAPSHOT</version>
+        <version>0.7.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>elasticactors-systems-http</artifactId>
@@ -27,8 +27,8 @@
     <url>https://github.com/elasticsoftwarefoundation/elasticactors</url>
 
     <properties>
-        <async-http-client.version>1.7.16</async-http-client.version>
-        <netty.version>3.8.0.Final</netty.version>
+        <async-http-client.version>1.8.16</async-http-client.version>
+        <netty.version>3.9.9.Final</netty.version>
     </properties>
 
     <dependencies>

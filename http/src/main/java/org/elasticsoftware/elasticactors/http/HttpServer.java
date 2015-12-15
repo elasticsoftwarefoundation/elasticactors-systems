@@ -98,8 +98,8 @@ public final class HttpServer extends SimpleChannelUpstreamHandler implements Ch
         org.jboss.netty.handler.codec.http.HttpRequest nettyRequest = (org.jboss.netty.handler.codec.http.HttpRequest) e.getMessage();
         // convert request to our internal request
         Map<String,List<String>> headers = new HashMap<String,List<String>>();
-        for (String headerName : nettyRequest.getHeaderNames()) {
-            headers.put(headerName,nettyRequest.getHeaders(headerName));
+        for (String headerName : nettyRequest.headers().names()) {
+            headers.put(headerName,nettyRequest.headers().getAll(headerName));
         }
         // see if we have a body
         byte[] content = null;
