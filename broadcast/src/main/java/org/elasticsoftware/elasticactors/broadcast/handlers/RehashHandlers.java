@@ -1,0 +1,110 @@
+package org.elasticsoftware.elasticactors.broadcast.handlers;
+
+import org.apache.log4j.Logger;
+import org.elasticsoftware.elasticactors.ActorRef;
+import org.elasticsoftware.elasticactors.MessageHandler;
+import org.elasticsoftware.elasticactors.MethodActor;
+import org.elasticsoftware.elasticactors.base.serialization.JacksonSerializationFramework;
+import org.elasticsoftware.elasticactors.broadcast.Broadcaster;
+import org.elasticsoftware.elasticactors.broadcast.messages.Add;
+import org.elasticsoftware.elasticactors.broadcast.messages.rehash.RehashComplete;
+import org.elasticsoftware.elasticactors.broadcast.messages.rehash.RehashRequest;
+import org.elasticsoftware.elasticactors.broadcast.messages.rehash.RehashResponse;
+import org.elasticsoftware.elasticactors.broadcast.state.BroadcasterState;
+import org.elasticsoftware.elasticactors.serialization.Message;
+
+import java.util.HashSet;
+
+public final class RehashHandlers extends MethodActor {
+
+    private static final Logger logger = Logger.getLogger(Broadcaster.class);
+
+    @MessageHandler
+    public void handle(RehashRequest rehashRequest, BroadcasterState state, ActorRef sender) {
+        if (state.getCurrentlyRehashing()) {
+            logger.warn(String.format("Broadcaster actor <%s> received rehash request, but is already in the process of rehashing. Ignoring.", getSelf().getActorId()));
+            return;
+        }
+
+        if (state.isLeafNode()) {
+            // if the root is a leaf node, there is nothing to do, as the rehash only works if the root has children nodes
+            logger.warn(String.format("Broadcaster actor <%s> received rehash request, but it only contains a leaf node. Ignoring.", getSelf().getActorId()));
+        } else {
+            state.setCurrentlyRehashing(true);
+            state.setRehashRoot(true);
+            state.setRehashReplyTo(sender);
+            state.setRehashMembers(new HashSet<ActorRef>());
+            state.setExpectedRehashingReplies(state.getNodes().size());
+            state.setReceivedRehashingReplies(0);
+
+            for (ActorRef actorRef : state.getNodes()) {
+                actorRef.tell(new RehashRequestInternal());
+            }
+        }
+    }
+
+    @MessageHandler
+    public void handle(RehashRequestInternal rehashRequest, BroadcasterState state, ActorRef sender) {
+        if (state.getCurrentlyRehashing()) {
+            logger.warn(String.format("Broadcaster actor <%s> received rehash request, but it only contains a leaf node. Ignoring.", getSelf().getActorId()));
+            return;
+        }
+
+        if (state.isLeafNode()) {
+            sender.tell(new RehashResponse(state.getLeaves()));
+        } else {
+            state.setCurrentlyRehashing(true);
+            state.setRehashReplyTo(sender);
+            state.setRehashMembers(new HashSet<ActorRef>());
+            state.setExpectedRehashingReplies(state.getNodes().size());
+            state.setReceivedRehashingReplies(0);
+
+            for (ActorRef actorRef : state.getNodes()) {
+                actorRef.tell(new RehashRequestInternal());
+            }
+        }
+    }
+
+    @MessageHandler
+    public void handle(RehashResponse rehashResponse, BroadcasterState state) throws Exception {
+        state.incrementReceivedRehashingReplies();
+        state.getRehashMembers().addAll(rehashResponse.getMembers());
+
+        if (state.getReceivedRehashingReplies().equals(state.getExpectedRehashingReplies())) {
+            if (state.getRehashRoot()) {
+                // this node is the root of the broadcaster, once all replies are received
+                // the tree is deleted & recreated
+                for (ActorRef actorRef : state.getNodes()) {
+                    getSystem().stop(actorRef);
+                }
+
+                state.setLeafNode(true);
+                state.getLeaves().clear();
+                state.getNodes().clear();
+
+                logger.info(String.format("Rehashing of broadcaster <%s> is now completed, re-adding all members to the tree", getSelf().getActorId()));
+
+                getSelf().tell(new Add(state.getRehashMembers()));
+
+                if (state.getRehashReplyTo() != null) {
+                    state.getRehashReplyTo().tell(new RehashComplete());
+                }
+            } else {
+                // this node is not the root of the broadcaster, send all it's children further up the tree
+                state.getRehashReplyTo().tell(new RehashResponse(state.getRehashMembers()));
+            }
+
+            // this node has received all replies it was waiting for, time to mark the state as such
+            state.setCurrentlyRehashing(false);
+            state.setRehashReplyTo(null);
+            state.setRehashMembers(new HashSet<ActorRef>());
+            state.setExpectedRehashingReplies(0);
+            state.setReceivedRehashingReplies(0);
+        }
+    }
+
+    @Message(serializationFramework = JacksonSerializationFramework.class, durable = true, immutable = true)
+    private static final class RehashRequestInternal {
+
+    }
+}

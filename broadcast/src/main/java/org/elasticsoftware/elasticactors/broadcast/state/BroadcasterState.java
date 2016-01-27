@@ -1,10 +1,6 @@
 package org.elasticsoftware.elasticactors.broadcast.state;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.collect.Maps;
+import com.fasterxml.jackson.annotation.*;
 import com.google.common.collect.Sets;
 import org.elasticsoftware.elasticactors.ActorRef;
 import org.elasticsoftware.elasticactors.base.state.JacksonActorState;
@@ -28,6 +24,14 @@ public final class BroadcasterState extends JacksonActorState<BroadcasterState> 
     private ThrottleConfig throttleConfig;
     private final transient Map<String,ThrottledBroadcastSession> throttledBroadcasts = newHashMap();
     private int size = 0;
+
+    // variables necessary for re-hashing process
+    private transient Boolean currentlyRehashing = false;
+    private transient Boolean rehashRoot = false;
+    private transient ActorRef rehashReplyTo = null;
+    private transient Set<ActorRef> rehashMembers = null;
+    private transient Integer expectedRehashingReplies = 0;
+    private transient Integer receivedRehashingReplies = 0;
 
     public BroadcasterState(int bucketsPerNode, int bucketSize) {
         this.bucketsPerNode = bucketsPerNode;
@@ -128,5 +132,68 @@ public final class BroadcasterState extends JacksonActorState<BroadcasterState> 
 
     public ThrottledBroadcastSession removeThrottledBroadcastSession(String id) {
         return this.throttledBroadcasts.remove(id);
+    }
+
+    @JsonIgnore
+    public Boolean getCurrentlyRehashing() {
+        return currentlyRehashing;
+    }
+
+    @JsonIgnore
+    public void setCurrentlyRehashing(Boolean currentlyRehashing) {
+        this.currentlyRehashing = currentlyRehashing;
+    }
+
+    public Boolean getRehashRoot() {
+        return rehashRoot;
+    }
+
+    public void setRehashRoot(Boolean rehashRoot) {
+        this.rehashRoot = rehashRoot;
+    }
+
+    @JsonIgnore
+    public ActorRef getRehashReplyTo() {
+        return rehashReplyTo;
+    }
+
+    @JsonIgnore
+    public void setRehashReplyTo(ActorRef rehashReplyTo) {
+        this.rehashReplyTo = rehashReplyTo;
+    }
+
+    @JsonIgnore
+    public Set<ActorRef> getRehashMembers() {
+        return rehashMembers;
+    }
+
+    @JsonIgnore
+    public void setRehashMembers(Set<ActorRef> rehashMembers) {
+        this.rehashMembers = rehashMembers;
+    }
+
+    @JsonIgnore
+    public Integer getExpectedRehashingReplies() {
+        return expectedRehashingReplies;
+    }
+
+    @JsonIgnore
+    public void setExpectedRehashingReplies(Integer expectedRehashingReplies) {
+        this.expectedRehashingReplies = expectedRehashingReplies;
+    }
+
+    @JsonIgnore
+    public Integer getReceivedRehashingReplies() {
+        return receivedRehashingReplies;
+    }
+
+    @JsonIgnore
+    public void setReceivedRehashingReplies(Integer receivedRehashingReplies) {
+        this.receivedRehashingReplies = receivedRehashingReplies;
+    }
+
+    @JsonIgnore
+    public void incrementReceivedRehashingReplies() {
+        this.receivedRehashingReplies++;
     }
 }

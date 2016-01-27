@@ -7,6 +7,7 @@ import com.google.common.hash.Hashing;
 import org.apache.log4j.Logger;
 import org.elasticsoftware.elasticactors.*;
 import org.elasticsoftware.elasticactors.base.serialization.JacksonSerializationFramework;
+import org.elasticsoftware.elasticactors.broadcast.handlers.RehashHandlers;
 import org.elasticsoftware.elasticactors.broadcast.messages.*;
 import org.elasticsoftware.elasticactors.broadcast.state.BroadcasterState;
 import org.elasticsoftware.elasticactors.broadcast.state.ThrottledBroadcastSession;
@@ -28,6 +29,7 @@ import static org.elasticsoftware.elasticactors.state.ActorLifecycleStep.CREATE;
  */
 @Actor(stateClass = BroadcasterState.class, serializationFramework = JacksonSerializationFramework.class)
 @PersistenceConfig(persistOnMessages = false, included = {Add.class, Remove.class, UpdateThrottleConfig.class}, persistOn = {CREATE})
+@MessageHandlers(RehashHandlers.class)
 @Configurable
 public final class Broadcaster extends MethodActor {
     private static final Logger logger = Logger.getLogger(Broadcaster.class);
@@ -45,6 +47,19 @@ public final class Broadcaster extends MethodActor {
     @Override
     public void postActivate(String previousVersion) throws Exception {
 
+    }
+
+    @Override
+    public void preDestroy(ActorRef destroyer) throws Exception {
+        super.preDestroy(destroyer);
+
+        BroadcasterState state = getState(BroadcasterState.class);
+
+        if (!state.isLeafNode()) {
+            for (ActorRef actorRef : state.getNodes()) {
+                getSystem().stop(actorRef);
+            }
+        }
     }
 
     @Autowired
@@ -224,7 +239,7 @@ public final class Broadcaster extends MethodActor {
         Multimap<String,ActorRef> sendMap = mapToBucket(state.getLeaves(),nodeIds);
         ActorSystem actorSystem = getSystem();
         // now create the new leave nodes
-        for (String actorId : sendMap.asMap().keySet()) {
+        for (String actorId : nodeIds) {
             ActorRef actorRef = actorSystem.actorOf(actorId,Broadcaster.class,new BroadcasterState(state.getBucketsPerNode(),state.getBucketSize(),sendMap.get(actorId)));
             state.getNodes().add(actorRef);
         }
