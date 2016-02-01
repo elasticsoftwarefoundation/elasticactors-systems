@@ -69,6 +69,17 @@ public final class Broadcaster extends MethodActor {
 
     @MessageHandler
     public void handleRemove(Remove remove,BroadcasterState state) {
+        if (state.getCurrentlyRehashing()) {
+            if (state.getRehashRoot()) {
+                logger.info(String.format("Received remove request, but broadcaster <%s> is currently rehashing. Saving message for when rehashing will be done", getSelf().getActorId()));
+                state.getReceivedDuringRehashing().add(remove);
+            } else {
+                logger.error(String.format("Received remove request, but broadcaster <%s> is currently rehashing and is not the root!. This should not happen, ignoring remove request.", getSelf().getActorId()));
+            }
+
+            return;
+        }
+
         if(state.isLeafNode()) {
             state.getLeaves().removeAll(remove.getMembers());
         } else {
@@ -85,6 +96,17 @@ public final class Broadcaster extends MethodActor {
 
     @MessageHandler
     public void handleAdd(Add add,BroadcasterState state) throws Exception {
+        if (state.getCurrentlyRehashing()) {
+            if (state.getRehashRoot()) {
+                logger.info(String.format("Received add request, but broadcaster <%s> is currently rehashing. Saving message for when rehashing will be done", getSelf().getActorId()));
+                state.getReceivedDuringRehashing().add(add);
+            } else {
+                logger.error(String.format("Received add request, but broadcaster <%s> is currently rehashing and is not the root!. This should not happen, ignoring add request.", getSelf().getActorId()));
+            }
+
+            return;
+        }
+
         if(state.isLeafNode()) {
             // add to leaves
             state.getLeaves().addAll(add.getMembers());

@@ -12,6 +12,7 @@ import org.elasticsoftware.elasticactors.broadcast.messages.rehash.RehashRequest
 import org.elasticsoftware.elasticactors.broadcast.messages.rehash.RehashResponse;
 import org.elasticsoftware.elasticactors.broadcast.state.BroadcasterState;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 
 public final class RehashHandlers extends MethodActor {
@@ -85,6 +86,11 @@ public final class RehashHandlers extends MethodActor {
 
                 getSelf().tell(new Add(state.getRehashMembers()));
 
+                // replay the messages received during the rehashing process (both add and remove)
+                for (Object message : state.getReceivedDuringRehashing()) {
+                    getSelf().tell(message);
+                }
+
                 if (state.getRehashReplyTo() != null) {
                     state.getRehashReplyTo().tell(new RehashComplete());
                 }
@@ -99,6 +105,7 @@ public final class RehashHandlers extends MethodActor {
             state.setRehashMembers(new HashSet<ActorRef>());
             state.setExpectedRehashingReplies(0);
             state.setReceivedRehashingReplies(0);
+            state.setReceivedDuringRehashing(new ArrayList<>());
         }
     }
 }

@@ -32,6 +32,7 @@ public final class BroadcasterState extends JacksonActorState<BroadcasterState> 
     private transient Set<ActorRef> rehashMembers = null;
     private transient Integer expectedRehashingReplies = 0;
     private transient Integer receivedRehashingReplies = 0;
+    private transient List<Object> receivedDuringRehashing = new ArrayList<>();
 
     public BroadcasterState(int bucketsPerNode, int bucketSize) {
         this.bucketsPerNode = bucketsPerNode;
@@ -195,5 +196,15 @@ public final class BroadcasterState extends JacksonActorState<BroadcasterState> 
     @JsonIgnore
     public void incrementReceivedRehashingReplies() {
         this.receivedRehashingReplies++;
+    }
+
+    @JsonIgnore
+    public List<Object> getReceivedDuringRehashing() {
+        return receivedDuringRehashing;
+    }
+
+    @JsonIgnore
+    public void setReceivedDuringRehashing(List<Object> receivedDuringRehashing) {
+        this.receivedDuringRehashing = receivedDuringRehashing;
     }
 }
