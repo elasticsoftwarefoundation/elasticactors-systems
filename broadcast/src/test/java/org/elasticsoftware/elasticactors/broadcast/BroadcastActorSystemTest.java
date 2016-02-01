@@ -322,7 +322,5 @@ public class BroadcastActorSystemTest {
         // wait until we're done
 
         assertTrue(waitLatch2.await(30, TimeUnit.SECONDS));
-
-
     }
 }

@@ -4,14 +4,13 @@ import org.apache.log4j.Logger;
 import org.elasticsoftware.elasticactors.ActorRef;
 import org.elasticsoftware.elasticactors.MessageHandler;
 import org.elasticsoftware.elasticactors.MethodActor;
-import org.elasticsoftware.elasticactors.base.serialization.JacksonSerializationFramework;
 import org.elasticsoftware.elasticactors.broadcast.Broadcaster;
 import org.elasticsoftware.elasticactors.broadcast.messages.Add;
+import org.elasticsoftware.elasticactors.broadcast.messages.rehash.InternalRehashRequest;
 import org.elasticsoftware.elasticactors.broadcast.messages.rehash.RehashComplete;
 import org.elasticsoftware.elasticactors.broadcast.messages.rehash.RehashRequest;
 import org.elasticsoftware.elasticactors.broadcast.messages.rehash.RehashResponse;
 import org.elasticsoftware.elasticactors.broadcast.state.BroadcasterState;
-import org.elasticsoftware.elasticactors.serialization.Message;
 
 import java.util.HashSet;
 
@@ -38,13 +37,13 @@ public final class RehashHandlers extends MethodActor {
             state.setReceivedRehashingReplies(0);
 
             for (ActorRef actorRef : state.getNodes()) {
-                actorRef.tell(new RehashRequestInternal());
+                actorRef.tell(new InternalRehashRequest());
             }
         }
     }
 
     @MessageHandler
-    public void handle(RehashRequestInternal rehashRequest, BroadcasterState state, ActorRef sender) {
+    public void handle(InternalRehashRequest rehashRequest, BroadcasterState state, ActorRef sender) {
         if (state.getCurrentlyRehashing()) {
             logger.warn(String.format("Broadcaster actor <%s> received rehash request, but it only contains a leaf node. Ignoring.", getSelf().getActorId()));
             return;
@@ -60,7 +59,7 @@ public final class RehashHandlers extends MethodActor {
             state.setReceivedRehashingReplies(0);
 
             for (ActorRef actorRef : state.getNodes()) {
-                actorRef.tell(new RehashRequestInternal());
+                actorRef.tell(new InternalRehashRequest());
             }
         }
     }
@@ -101,10 +100,5 @@ public final class RehashHandlers extends MethodActor {
             state.setExpectedRehashingReplies(0);
             state.setReceivedRehashingReplies(0);
         }
-    }
-
-    @Message(serializationFramework = JacksonSerializationFramework.class, durable = true, immutable = true)
-    private static final class RehashRequestInternal {
-
     }
 }
