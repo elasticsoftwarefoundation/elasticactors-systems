@@ -7,6 +7,7 @@ import com.google.common.hash.Hashing;
 import org.apache.log4j.Logger;
 import org.elasticsoftware.elasticactors.*;
 import org.elasticsoftware.elasticactors.base.serialization.JacksonSerializationFramework;
+import org.elasticsoftware.elasticactors.broadcast.handlers.RehashHandlers;
 import org.elasticsoftware.elasticactors.broadcast.messages.*;
 import org.elasticsoftware.elasticactors.broadcast.state.BroadcasterState;
 import org.elasticsoftware.elasticactors.broadcast.state.ThrottledBroadcastSession;
@@ -28,6 +29,7 @@ import static org.elasticsoftware.elasticactors.state.ActorLifecycleStep.CREATE;
  */
 @Actor(stateClass = BroadcasterState.class, serializationFramework = JacksonSerializationFramework.class)
 @PersistenceConfig(persistOnMessages = false, included = {Add.class, Remove.class, UpdateThrottleConfig.class}, persistOn = {CREATE})
+@MessageHandlers(RehashHandlers.class)
 @Configurable
 public final class Broadcaster extends MethodActor {
     private static final Logger logger = Logger.getLogger(Broadcaster.class);
@@ -47,6 +49,19 @@ public final class Broadcaster extends MethodActor {
 
     }
 
+    @Override
+    public void preDestroy(ActorRef destroyer) throws Exception {
+        super.preDestroy(destroyer);
+
+        BroadcasterState state = getState(BroadcasterState.class);
+
+        if (!state.isLeafNode()) {
+            for (ActorRef actorRef : state.getNodes()) {
+                getSystem().stop(actorRef);
+            }
+        }
+    }
+
     @Autowired
     public void setSerializationFramework(JacksonSerializationFramework serializationFramework) {
         this.serializationFramework = serializationFramework;
@@ -54,6 +69,17 @@ public final class Broadcaster extends MethodActor {
 
     @MessageHandler
     public void handleRemove(Remove remove,BroadcasterState state) {
+        if (state.getCurrentlyRehashing()) {
+            if (state.getRehashRoot()) {
+                logger.info(String.format("Received remove request, but broadcaster <%s> is currently rehashing. Saving message for when rehashing will be done", getSelf().getActorId()));
+                state.getReceivedDuringRehashing().add(remove);
+            } else {
+                logger.error(String.format("Received remove request, but broadcaster <%s> is currently rehashing and is not the root!. This should not happen, ignoring remove request.", getSelf().getActorId()));
+            }
+
+            return;
+        }
+
         if(state.isLeafNode()) {
             state.getLeaves().removeAll(remove.getMembers());
         } else {
@@ -70,6 +96,17 @@ public final class Broadcaster extends MethodActor {
 
     @MessageHandler
     public void handleAdd(Add add,BroadcasterState state) throws Exception {
+        if (state.getCurrentlyRehashing()) {
+            if (state.getRehashRoot()) {
+                logger.info(String.format("Received add request, but broadcaster <%s> is currently rehashing. Saving message for when rehashing will be done", getSelf().getActorId()));
+                state.getReceivedDuringRehashing().add(add);
+            } else {
+                logger.error(String.format("Received add request, but broadcaster <%s> is currently rehashing and is not the root!. This should not happen, ignoring add request.", getSelf().getActorId()));
+            }
+
+            return;
+        }
+
         if(state.isLeafNode()) {
             // add to leaves
             state.getLeaves().addAll(add.getMembers());
@@ -224,7 +261,7 @@ public final class Broadcaster extends MethodActor {
         Multimap<String,ActorRef> sendMap = mapToBucket(state.getLeaves(),nodeIds);
         ActorSystem actorSystem = getSystem();
         // now create the new leave nodes
-        for (String actorId : sendMap.asMap().keySet()) {
+        for (String actorId : nodeIds) {
             ActorRef actorRef = actorSystem.actorOf(actorId,Broadcaster.class,new BroadcasterState(state.getBucketsPerNode(),state.getBucketSize(),sendMap.get(actorId)));
             state.getNodes().add(actorRef);
         }
