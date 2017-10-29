@@ -23,6 +23,8 @@ import org.elasticsoftware.elasticactors.UntypedActor;
 import org.elasticsoftware.elasticactors.http.messages.HttpResponse;
 import org.elasticsoftware.elasticactors.http.messages.ServerSentEvent;
 import org.elasticsoftware.elasticactors.http.messages.SseResponse;
+import org.elasticsoftware.elasticactors.serialization.NoopSerializationFramework;
+import org.elasticsoftware.elasticactors.serialization.SerializationFramework;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelFutureListener;
@@ -49,6 +51,11 @@ public final class HttpServiceResponseHandler extends UntypedActor {
         @Override
         public State getBody() {
             return this;
+        }
+
+        @Override
+        public Class<? extends SerializationFramework> getSerializationFramework() {
+            return NoopSerializationFramework.class;
         }
 
         public Channel getResponseChannel() {

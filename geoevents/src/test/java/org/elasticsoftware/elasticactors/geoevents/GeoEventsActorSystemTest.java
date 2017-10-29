@@ -16,13 +16,15 @@
 
 package org.elasticsoftware.elasticactors.geoevents;
 
-import org.apache.log4j.BasicConfigurator;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.elasticsoftware.elasticactors.ActorRef;
 import org.elasticsoftware.elasticactors.ActorSystem;
 import org.elasticsoftware.elasticactors.geoevents.actors.TestActor;
 import org.elasticsoftware.elasticactors.geoevents.messages.PublishLocation;
 import org.elasticsoftware.elasticactors.geoevents.messages.RegisterInterest;
+import org.elasticsoftware.elasticactors.serialization.NoopSerializationFramework;
+import org.elasticsoftware.elasticactors.serialization.SerializationFramework;
 import org.elasticsoftware.elasticactors.test.TestActorSystem;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -39,14 +41,12 @@ import static org.testng.Assert.assertTrue;
  * @author Joost van de Wijgerd
  */
 public class GeoEventsActorSystemTest {
-    private static final Logger logger = Logger.getLogger(GeoEventsActorSystemTest.class);
+    private static final Logger logger = LogManager.getLogger(GeoEventsActorSystemTest.class);
 
     private TestActorSystem testActorSystem;
 
         @BeforeMethod(enabled = true)
         public void setUp() {
-            BasicConfigurator.resetConfiguration();
-            BasicConfigurator.configure();
             testActorSystem = new TestActorSystem();
             testActorSystem.initialize();
         }
@@ -57,7 +57,6 @@ public class GeoEventsActorSystemTest {
                 testActorSystem.destroy();
                 testActorSystem = null;
             }
-            BasicConfigurator.resetConfiguration();
         }
 
     @Test(enabled = true)
@@ -66,6 +65,11 @@ public class GeoEventsActorSystemTest {
         ActorRef dispatcher = geoEventsSystem.serviceActorFor("geoEventsService");
         final CountDownLatch waitLatch = new CountDownLatch(1);
         ActorRef listener = geoEventsSystem.tempActorOf(TestActor.class, new Receiver() {
+            @Override
+            public Class<? extends SerializationFramework> getSerializationFramework() {
+                return NoopSerializationFramework.class;
+            }
+
             @Override
             public void onReceive(ActorRef sender, Object message) throws Exception {
                 //@todo: capture the messages
@@ -78,6 +82,11 @@ public class GeoEventsActorSystemTest {
         dispatcher.tell(new RegisterInterest(listener,new Coordinate(52.370216d,4.895168d),2500),listener);
 
         ActorRef publisher = geoEventsSystem.tempActorOf(TestActor.class, new Receiver() {
+            @Override
+            public Class<? extends SerializationFramework> getSerializationFramework() {
+                return NoopSerializationFramework.class;
+            }
+
             @Override
             public void onReceive(ActorRef sender, Object message) throws Exception {
                 //@todo: capture the messages

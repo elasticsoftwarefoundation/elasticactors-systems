@@ -101,7 +101,7 @@ public final class Region extends UntypedActor {
         } else if(message instanceof ScanRequest) {
             handle((ScanRequest) message,sender);
         } else {
-            unhandled(message);
+            // @Todo log error
         }
     }
 

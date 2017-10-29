@@ -4,7 +4,8 @@ import com.google.common.base.Charsets;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.hash.Hashing;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.elasticsoftware.elasticactors.*;
 import org.elasticsoftware.elasticactors.base.serialization.JacksonSerializationFramework;
 import org.elasticsoftware.elasticactors.broadcast.handlers.RehashHandlers;
@@ -32,7 +33,7 @@ import static org.elasticsoftware.elasticactors.state.ActorLifecycleStep.CREATE;
 @MessageHandlers(RehashHandlers.class)
 @Configurable
 public final class Broadcaster extends MethodActor {
-    private static final Logger logger = Logger.getLogger(Broadcaster.class);
+    private static final Logger logger = LogManager.getLogger(Broadcaster.class);
     private JacksonSerializationFramework serializationFramework;
 
     @Override

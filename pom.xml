@@ -19,7 +19,7 @@
 
     <groupId>org.elasticsoftware.elasticactors-systems</groupId>
     <artifactId>elasticactors-systems</artifactId>
-    <version>0.8.1-SNAPSHOT</version>
+    <version>0.9.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Elastic Software Foundation :: ElasticActors :: ElasticSystems</name>
     <url>https://github.com/elasticsoftwarefoundation/elasticactors-systems</url>
@@ -27,9 +27,9 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <elasticactors.version>0.23.0</elasticactors.version>
-        <log4j.version>1.2.17</log4j.version>
-        <spring.version>4.2.3.RELEASE</spring.version>
+        <elasticactors.version>0.30.0</elasticactors.version>
+        <log4j.version>2.8.2</log4j.version>
+        <spring.version>5.0.0.RELEASE</spring.version>
 
         <!-- testing -->
         <testng-version>5.10</testng-version>
@@ -79,8 +79,8 @@
 
     <dependencies>
         <dependency>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
             <version>${log4j.version}</version>
         </dependency>
 

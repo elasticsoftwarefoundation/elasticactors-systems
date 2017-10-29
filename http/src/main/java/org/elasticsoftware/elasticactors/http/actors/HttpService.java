@@ -16,7 +16,8 @@
 
 package org.elasticsoftware.elasticactors.http.actors;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.elasticsoftware.elasticactors.*;
 import org.elasticsoftware.elasticactors.http.HttpServer;
 import org.elasticsoftware.elasticactors.http.messages.HttpRequest;
@@ -43,7 +44,7 @@ import java.util.concurrent.Executors;
 // @todo: need to make sure spring can take the name from ServiceActor annotation
 @ServiceActor("httpServer")
 public final class HttpService extends UntypedActor {
-    private static final Logger logger = Logger.getLogger(HttpService.class);
+    private static final Logger logger = LogManager.getLogger(HttpService.class);
     private final ConcurrentMap<String,ActorRef> routes = new ConcurrentHashMap<String,ActorRef>();
     private final PathMatcher pathMatcher = new AntPathMatcher();
     private final ActorSystem actorSystem;
@@ -78,7 +79,7 @@ public final class HttpService extends UntypedActor {
             routes.putIfAbsent(registerRouteMessage.getPattern(),registerRouteMessage.getHandlerRef());
             logger.info(String.format("Adding Route with pattern [%s] for Actor [%s]",registerRouteMessage.getPattern(),registerRouteMessage.getHandlerRef().toString()));
         } else {
-            unhandled(message);
+            logger.warn("Received a message that is not understood: "+message.getClass().getSimpleName());
         }
     }
 

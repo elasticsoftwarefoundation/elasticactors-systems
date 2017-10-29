@@ -16,7 +16,8 @@
 
 package org.elasticsoftware.elasticactors.http.actors;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.elasticsoftware.elasticactors.Actor;
 import org.elasticsoftware.elasticactors.ActorRef;
 import org.elasticsoftware.elasticactors.UntypedActor;
@@ -34,7 +35,7 @@ import java.util.concurrent.TimeUnit;
  */
 @Actor(serializationFramework = JacksonSerializationFramework.class)
 public final class EventStreamer extends UntypedActor {
-    private static final Logger logger = Logger.getLogger(EventStreamer.class);
+    private static final Logger logger = LogManager.getLogger(EventStreamer.class);
 
     @Override
     public void postActivate(String previousVersion) throws Exception {

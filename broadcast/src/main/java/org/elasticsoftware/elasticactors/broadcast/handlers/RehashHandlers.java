@@ -1,6 +1,7 @@
 package org.elasticsoftware.elasticactors.broadcast.handlers;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.elasticsoftware.elasticactors.ActorRef;
 import org.elasticsoftware.elasticactors.MessageHandler;
 import org.elasticsoftware.elasticactors.MethodActor;
@@ -17,7 +18,7 @@ import java.util.HashSet;
 
 public final class RehashHandlers extends MethodActor {
 
-    private static final Logger logger = Logger.getLogger(Broadcaster.class);
+    private static final Logger logger = LogManager.getLogger(Broadcaster.class);
 
     @MessageHandler
     public void handle(RehashRequest rehashRequest, BroadcasterState state, ActorRef sender) {

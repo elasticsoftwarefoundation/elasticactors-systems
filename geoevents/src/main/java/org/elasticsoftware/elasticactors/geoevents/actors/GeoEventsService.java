@@ -47,7 +47,7 @@ public final class GeoEventsService extends UntypedActor {
         } else if(message instanceof ScanRequest) {
             handle((ScanRequest) message,sender);
         } else {
-            unhandled(message);
+            // @TODO: log error
         }
     }
 

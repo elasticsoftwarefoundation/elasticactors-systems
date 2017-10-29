@@ -19,8 +19,8 @@ package org.elasticsoftware.elasticactors.http;
 
 import com.google.common.base.Charsets;
 import com.ning.http.client.*;
-import org.apache.log4j.BasicConfigurator;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.elasticsoftware.elasticactors.ActorRef;
 import org.elasticsoftware.elasticactors.ActorSystem;
 import org.elasticsoftware.elasticactors.http.actors.EventStreamer;
@@ -44,7 +44,6 @@ public class HttpActorSystemTest {
 
     @BeforeMethod(enabled = true)
     public void setUp() {
-        BasicConfigurator.configure();
         testActorSystem = new TestActorSystem();
         testActorSystem.initialize();
     }
@@ -143,7 +142,7 @@ public class HttpActorSystemTest {
     }
 
     private static final class ServerSentEventsHandler implements AsyncHandler<Object> {
-        private static final Logger logger = Logger.getLogger(ServerSentEventsHandler.class);
+        private static final Logger logger = LogManager.getLogger(ServerSentEventsHandler.class);
         private final CountDownLatch waitLatch;
 
         private ServerSentEventsHandler(CountDownLatch waitLatch) {

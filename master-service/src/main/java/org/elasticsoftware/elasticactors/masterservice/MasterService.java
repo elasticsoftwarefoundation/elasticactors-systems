@@ -1,6 +1,7 @@
 package org.elasticsoftware.elasticactors.masterservice;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.elasticsoftware.elasticactors.*;
 import org.elasticsoftware.elasticactors.cluster.ClusterEventListener;
 import org.elasticsoftware.elasticactors.cluster.ClusterService;
@@ -19,7 +20,7 @@ public abstract class MasterService extends MethodActor implements ClusterEventL
     // @todo: we need this because leadership events are generated before the ElasticActors runtime is up
     private final AtomicReference<MasterElected> pendingMasterElected = new AtomicReference<>(null);
     private final AtomicBoolean activated = new AtomicBoolean(false);
-    private final Logger logger = Logger.getLogger(getClass());
+    private final Logger logger = LogManager.getLogger(getClass());
     private final ActorSystem actorSystem;
     private final ClusterService clusterService;
     private final ActorRef self;

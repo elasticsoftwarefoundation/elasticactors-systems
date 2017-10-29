@@ -20,7 +20,8 @@ import com.ning.http.client.AsyncCompletionHandler;
 import com.ning.http.client.AsyncHttpClient;
 import com.ning.http.client.AsyncHttpClientConfig;
 import com.ning.http.client.Response;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.elasticsoftware.elasticactors.ActorRef;
 import org.elasticsoftware.elasticactors.ServiceActor;
 import org.elasticsoftware.elasticactors.TypedActor;
@@ -38,7 +39,7 @@ import java.util.Map;
  */
 @ServiceActor("httpClient")
 public final class HttpClientService extends TypedActor<HttpRequest> {
-    private static final Logger logger = Logger.getLogger(HttpClientService.class);
+    private static final Logger logger = LogManager.getLogger(HttpClientService.class);
     private AsyncHttpClient httpClient;
 
     public HttpClientService() {

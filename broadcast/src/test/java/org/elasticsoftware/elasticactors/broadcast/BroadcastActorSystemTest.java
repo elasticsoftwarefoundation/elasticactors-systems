@@ -1,8 +1,7 @@
 package org.elasticsoftware.elasticactors.broadcast;
 
-import org.apache.log4j.BasicConfigurator;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.elasticsoftware.elasticactors.ActorRef;
 import org.elasticsoftware.elasticactors.ActorSystem;
 import org.elasticsoftware.elasticactors.base.actors.ActorDelegate;
@@ -37,10 +36,7 @@ public class BroadcastActorSystemTest {
 
     @BeforeMethod(enabled = true)
     public void setUp() {
-        BasicConfigurator.resetConfiguration();
-        BasicConfigurator.configure();
         // decrease the verbosity of logs a little bit
-        Logger.getRootLogger().setLevel(Level.INFO);
         testActorSystem = new TestActorSystem();
         testActorSystem.initialize();
     }
@@ -51,7 +47,6 @@ public class BroadcastActorSystemTest {
             testActorSystem.destroy();
             testActorSystem = null;
         }
-        BasicConfigurator.resetConfiguration();
     }
 
     @Test(enabled = true)

@@ -16,7 +16,8 @@
 
 package org.elasticsoftware.elasticactors.http;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.elasticsoftware.elasticactors.ActorRef;
 import org.elasticsoftware.elasticactors.ActorSystem;
 import org.elasticsoftware.elasticactors.http.actors.HttpService;
@@ -42,7 +43,7 @@ import static org.jboss.netty.channel.Channels.pipeline;
  * @author Joost van de Wijgerd
  */
 public final class HttpServer extends SimpleChannelUpstreamHandler implements ChannelPipelineFactory {
-    private static final Logger logger = Logger.getLogger(HttpServer.class);
+    private static final Logger logger = LogManager.getLogger(HttpServer.class);
     private final ServerSentEventEncoder sseEventEncoder = new ServerSentEventEncoder();
     private final ServerSocketChannelFactory channelFactory;
     private final ActorSystem actorSystem;
