@@ -94,7 +94,7 @@ public class GeoEventsActorSystemTest {
         });
 
         // publish event at the eBuddy office
-        Map<String,Object> customProperties = new LinkedHashMap<String,Object>();
+        Map<String,Object> customProperties = new LinkedHashMap<>();
         customProperties.put("name","Joost van de Wijgerd");
         dispatcher.tell(new PublishLocation(publisher,new Coordinate(52.364207d,4.891793d),3600,customProperties),publisher);
 

@@ -50,7 +50,7 @@ public final class User extends TypedActor<HttpRequest> {
     public void onReceive(ActorRef sender, HttpRequest message) throws Exception {
         logger.info("Got request");
         // send something back
-        Map<String,List<String>> headers = new HashMap<String,List<String>>();
+        Map<String,List<String>> headers = new HashMap<>();
         headers.put(HttpHeaders.Names.CONTENT_TYPE, Arrays.asList("text/plain"));
         sender.tell(new HttpResponse(200, headers, "HelloWorld".getBytes(Charsets.UTF_8)), getSelf());
     }

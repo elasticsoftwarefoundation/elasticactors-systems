@@ -44,7 +44,7 @@ public final class Region extends UntypedActor {
         private final SortedMap<Long,PublishLocation> publishedLocations;
 
         public State(GeoHash geoHash) {
-            this(geoHash,new LinkedList<RegisterInterest>(),new TreeMap<Long,PublishLocation>());
+            this(geoHash, new LinkedList<>(), new TreeMap<>());
         }
 
         @Override
@@ -109,7 +109,7 @@ public final class Region extends UntypedActor {
         State state = getState(State.class);
         long lastSeen = System.currentTimeMillis();
         SortedMap<Long,PublishLocation> publishedLocations = state.prunePublishedLocations(lastSeen);
-        List<ScanResponse.ScanResult> scanResults = new LinkedList<ScanResponse.ScanResult>();
+        List<ScanResponse.ScanResult> scanResults = new LinkedList<>();
         for (PublishLocation publishedLocation : publishedLocations.values()) {
             double distance = publishedLocation.getLocation().distance(message.getLocation(), LengthUnit.METRES);
             if(distance <= message.getRadiusInMetres()) {

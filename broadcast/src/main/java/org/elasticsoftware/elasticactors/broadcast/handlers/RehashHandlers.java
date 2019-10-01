@@ -34,7 +34,7 @@ public final class RehashHandlers extends MethodActor {
             state.setCurrentlyRehashing(true);
             state.setRehashRoot(true);
             state.setRehashReplyTo(sender);
-            state.setRehashMembers(new HashSet<ActorRef>());
+            state.setRehashMembers(new HashSet<>());
             state.setExpectedRehashingReplies(state.getNodes().size());
             state.setReceivedRehashingReplies(0);
 
@@ -56,7 +56,7 @@ public final class RehashHandlers extends MethodActor {
         } else {
             state.setCurrentlyRehashing(true);
             state.setRehashReplyTo(sender);
-            state.setRehashMembers(new HashSet<ActorRef>());
+            state.setRehashMembers(new HashSet<>());
             state.setExpectedRehashingReplies(state.getNodes().size());
             state.setReceivedRehashingReplies(0);
 
@@ -103,7 +103,7 @@ public final class RehashHandlers extends MethodActor {
             // this node has received all replies it was waiting for, time to mark the state as such
             state.setCurrentlyRehashing(false);
             state.setRehashReplyTo(null);
-            state.setRehashMembers(new HashSet<ActorRef>());
+            state.setRehashMembers(new HashSet<>());
             state.setExpectedRehashingReplies(0);
             state.setReceivedRehashingReplies(0);
             state.setReceivedDuringRehashing(new ArrayList<>());

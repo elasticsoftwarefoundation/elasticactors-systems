@@ -42,7 +42,7 @@ public final class SseResponse extends HttpResponse {
     }});
 
     public SseResponse() {
-        this(200,new LinkedHashMap<String, List<String>>(DEFAULT_HEADERS));
+        this(200, new LinkedHashMap<>(DEFAULT_HEADERS));
     }
 
     @JsonCreator

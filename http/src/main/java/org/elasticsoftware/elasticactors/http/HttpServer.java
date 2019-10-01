@@ -109,7 +109,7 @@ public final class HttpServer extends SimpleChannelUpstreamHandler implements Ch
     public void messageReceived(ChannelHandlerContext ctx, MessageEvent e) throws Exception {
         org.jboss.netty.handler.codec.http.HttpRequest nettyRequest = (org.jboss.netty.handler.codec.http.HttpRequest) e.getMessage();
         // convert request to our internal request
-        Map<String,List<String>> headers = new HashMap<String,List<String>>();
+        Map<String,List<String>> headers = new HashMap<>();
         for (String headerName : nettyRequest.headers().names()) {
             headers.put(headerName,nettyRequest.headers().getAll(headerName));
         }

@@ -48,7 +48,7 @@ import java.util.concurrent.Executors;
 @ServiceActor("httpServer")
 public final class HttpService extends UntypedActor {
     private static final Logger logger = LoggerFactory.getLogger(HttpService.class);
-    private final ConcurrentMap<String,ActorRef> routes = new ConcurrentHashMap<String,ActorRef>();
+    private final ConcurrentMap<String,ActorRef> routes = new ConcurrentHashMap<>();
     private final PathMatcher pathMatcher = new AntPathMatcher();
     private final ActorSystem actorSystem;
     private final ActorSystemConfiguration configuration;
@@ -107,7 +107,7 @@ public final class HttpService extends UntypedActor {
             return handlerRef;
         }
         // Pattern match?
-        List<String> matchingPatterns = new ArrayList<String>();
+        List<String> matchingPatterns = new ArrayList<>();
         for (String registeredPattern : this.routes.keySet()) {
             if (pathMatcher.match(registeredPattern, urlPath)) {
                 matchingPatterns.add(registeredPattern);
