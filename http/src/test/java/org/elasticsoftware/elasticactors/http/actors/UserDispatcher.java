@@ -16,20 +16,20 @@
 
 package org.elasticsoftware.elasticactors.http.actors;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.elasticsoftware.elasticactors.ActorRef;
 import org.elasticsoftware.elasticactors.ServiceActor;
 import org.elasticsoftware.elasticactors.TypedActor;
 import org.elasticsoftware.elasticactors.http.messages.HttpRequest;
 import org.elasticsoftware.elasticactors.http.messages.RegisterRouteMessage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Joost van de Wijgerd
  */
 @ServiceActor("userDispatcher")
 public final class UserDispatcher extends TypedActor<HttpRequest> {
-    private static final Logger logger = LogManager.getLogger(UserDispatcher.class);
+    private static final Logger logger = LoggerFactory.getLogger(UserDispatcher.class);
 
     @Override
     public void postActivate(String previousVersion) throws Exception {

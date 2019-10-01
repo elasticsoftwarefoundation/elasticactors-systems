@@ -1,7 +1,5 @@
 package org.elasticsoftware.elasticactors.broadcast;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.elasticsoftware.elasticactors.ActorRef;
 import org.elasticsoftware.elasticactors.ActorSystem;
 import org.elasticsoftware.elasticactors.base.actors.ActorDelegate;
@@ -24,9 +22,10 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static java.lang.String.format;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
+
+import static java.lang.String.format;
 
 /**
  * @author Joost van de Wijgerd

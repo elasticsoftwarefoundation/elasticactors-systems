@@ -1,7 +1,5 @@
 package org.elasticsoftware.elasticactors.broadcast.handlers;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.elasticsoftware.elasticactors.ActorRef;
 import org.elasticsoftware.elasticactors.MessageHandler;
 import org.elasticsoftware.elasticactors.MethodActor;
@@ -12,24 +10,26 @@ import org.elasticsoftware.elasticactors.broadcast.messages.rehash.RehashComplet
 import org.elasticsoftware.elasticactors.broadcast.messages.rehash.RehashRequest;
 import org.elasticsoftware.elasticactors.broadcast.messages.rehash.RehashResponse;
 import org.elasticsoftware.elasticactors.broadcast.state.BroadcasterState;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 
 public final class RehashHandlers extends MethodActor {
 
-    private static final Logger logger = LogManager.getLogger(Broadcaster.class);
+    private static final Logger logger = LoggerFactory.getLogger(Broadcaster.class);
 
     @MessageHandler
     public void handle(RehashRequest rehashRequest, BroadcasterState state, ActorRef sender) {
         if (state.getCurrentlyRehashing()) {
-            logger.warn(String.format("Broadcaster actor <%s> received rehash request, but is already in the process of rehashing. Ignoring.", getSelf().getActorId()));
+            logger.warn("Broadcaster actor <{}> received rehash request, but is already in the process of rehashing. Ignoring.", getSelf().getActorId());
             return;
         }
 
         if (state.isLeafNode()) {
             // if the root is a leaf node, there is nothing to do, as the rehash only works if the root has children nodes
-            logger.warn(String.format("Broadcaster actor <%s> received rehash request, but it only contains a leaf node. Ignoring.", getSelf().getActorId()));
+            logger.warn("Broadcaster actor <{}> received rehash request, but it only contains a leaf node. Ignoring.", getSelf().getActorId());
         } else {
             state.setCurrentlyRehashing(true);
             state.setRehashRoot(true);
@@ -47,7 +47,7 @@ public final class RehashHandlers extends MethodActor {
     @MessageHandler
     public void handle(InternalRehashRequest rehashRequest, BroadcasterState state, ActorRef sender) {
         if (state.getCurrentlyRehashing()) {
-            logger.warn(String.format("Broadcaster actor <%s> received rehash request, but it only contains a leaf node. Ignoring.", getSelf().getActorId()));
+            logger.warn("Broadcaster actor <{}> received rehash request, but it only contains a leaf node. Ignoring.", getSelf().getActorId());
             return;
         }
 
@@ -83,7 +83,7 @@ public final class RehashHandlers extends MethodActor {
                 state.getLeaves().clear();
                 state.getNodes().clear();
 
-                logger.info(String.format("Rehashing of broadcaster <%s> is now completed, re-adding all members to the tree", getSelf().getActorId()));
+                logger.info("Rehashing of broadcaster <{}> is now completed, re-adding all members to the tree", getSelf().getActorId());
 
                 getSelf().tell(new Add(state.getRehashMembers()));
 

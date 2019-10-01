@@ -35,7 +35,7 @@ public final class HttpRequest extends HttpMessage {
     private final String method;
 
     public HttpRequest(String url) {
-        this("GET", url, Collections.<String,List<String>>emptyMap(),null);
+        this("GET", url, Collections.emptyMap(),null);
     }
 
     public HttpRequest(String url,Map<String,List<String>> headers) {

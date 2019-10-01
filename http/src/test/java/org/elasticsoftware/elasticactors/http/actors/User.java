@@ -17,8 +17,6 @@
 package org.elasticsoftware.elasticactors.http.actors;
 
 import com.google.common.base.Charsets;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.elasticsoftware.elasticactors.Actor;
 import org.elasticsoftware.elasticactors.ActorRef;
 import org.elasticsoftware.elasticactors.TypedActor;
@@ -26,6 +24,8 @@ import org.elasticsoftware.elasticactors.base.serialization.JacksonSerialization
 import org.elasticsoftware.elasticactors.http.messages.HttpRequest;
 import org.elasticsoftware.elasticactors.http.messages.HttpResponse;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -37,7 +37,7 @@ import java.util.Map;
  */
 @Actor(serializationFramework = JacksonSerializationFramework.class)
 public final class User extends TypedActor<HttpRequest> {
-    private static final Logger logger = LogManager.getLogger(User.class);
+    private static final Logger logger = LoggerFactory.getLogger(User.class);
 
     @Override
     public void postActivate(String previousVersion) throws Exception {

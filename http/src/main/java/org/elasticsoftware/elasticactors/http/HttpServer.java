@@ -16,8 +16,6 @@
 
 package org.elasticsoftware.elasticactors.http;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.elasticsoftware.elasticactors.ActorRef;
 import org.elasticsoftware.elasticactors.ActorSystem;
 import org.elasticsoftware.elasticactors.http.actors.HttpService;
@@ -25,9 +23,22 @@ import org.elasticsoftware.elasticactors.http.actors.HttpServiceResponseHandler;
 import org.elasticsoftware.elasticactors.http.codec.ServerSentEventEncoder;
 import org.elasticsoftware.elasticactors.http.messages.HttpRequest;
 import org.jboss.netty.bootstrap.ServerBootstrap;
-import org.jboss.netty.channel.*;
+import org.jboss.netty.channel.Channel;
+import org.jboss.netty.channel.ChannelFutureListener;
+import org.jboss.netty.channel.ChannelHandlerContext;
+import org.jboss.netty.channel.ChannelPipeline;
+import org.jboss.netty.channel.ChannelPipelineFactory;
+import org.jboss.netty.channel.ExceptionEvent;
+import org.jboss.netty.channel.MessageEvent;
+import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
 import org.jboss.netty.channel.socket.ServerSocketChannelFactory;
-import org.jboss.netty.handler.codec.http.*;
+import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
+import org.jboss.netty.handler.codec.http.HttpRequestDecoder;
+import org.jboss.netty.handler.codec.http.HttpResponseEncoder;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.jboss.netty.handler.codec.http.HttpVersion;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -43,7 +54,7 @@ import static org.jboss.netty.channel.Channels.pipeline;
  * @author Joost van de Wijgerd
  */
 public final class HttpServer extends SimpleChannelUpstreamHandler implements ChannelPipelineFactory {
-    private static final Logger logger = LogManager.getLogger(HttpServer.class);
+    private static final Logger logger = LoggerFactory.getLogger(HttpServer.class);
     private final ServerSentEventEncoder sseEventEncoder = new ServerSentEventEncoder();
     private final ServerSocketChannelFactory channelFactory;
     private final ActorSystem actorSystem;

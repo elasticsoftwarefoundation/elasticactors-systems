@@ -18,23 +18,33 @@ package org.elasticsoftware.elasticactors.http;
 
 
 import com.google.common.base.Charsets;
-import com.ning.http.client.*;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import io.netty.handler.codec.http.HttpHeaders;
+import org.asynchttpclient.AsyncHandler;
+import org.asynchttpclient.AsyncHttpClient;
+import org.asynchttpclient.DefaultAsyncHttpClient;
+import org.asynchttpclient.HttpResponseBodyPart;
+import org.asynchttpclient.HttpResponseStatus;
+import org.asynchttpclient.ListenableFuture;
+import org.asynchttpclient.Response;
 import org.elasticsoftware.elasticactors.ActorRef;
 import org.elasticsoftware.elasticactors.ActorSystem;
 import org.elasticsoftware.elasticactors.http.actors.EventStreamer;
 import org.elasticsoftware.elasticactors.http.actors.User;
 import org.elasticsoftware.elasticactors.test.TestActorSystem;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
 
 /**
  * @author Joost van de Wijgerd
@@ -62,13 +72,13 @@ public class HttpActorSystemTest {
         ActorRef user2Ref = testSystem.actorOf("users/2", User.class);
         ActorRef user3Ref = testSystem.actorOf("users/3", User.class);
 
-        AsyncHttpClient testClient = new AsyncHttpClient();
+        AsyncHttpClient testClient = new DefaultAsyncHttpClient();
         for (int i = 1; i < 4; i++) {
             ListenableFuture<Response> responseFuture = testClient.prepareGet(String.format("http://localhost:9080/users/%d", i)).execute();
             Response response = responseFuture.get();
 
             assertEquals(response.getContentType(), "text/plain");
-            assertEquals(response.getResponseBody("UTF-8"), "HelloWorld");
+            assertEquals(response.getResponseBody(StandardCharsets.UTF_8), "HelloWorld");
 
         }
 
@@ -135,14 +145,14 @@ public class HttpActorSystemTest {
         // create a stream
         ActorRef steamer = testSystem.actorOf("events/testing", EventStreamer.class);
 
-        AsyncHttpClient testClient = new AsyncHttpClient();
+        AsyncHttpClient testClient = new DefaultAsyncHttpClient();
         final CountDownLatch waitLatch = new CountDownLatch(1);
         testClient.prepareGet("http://localhost:9080/events/testing").execute(new ServerSentEventsHandler(waitLatch));
         waitLatch.await(1, TimeUnit.MINUTES);
     }
 
     private static final class ServerSentEventsHandler implements AsyncHandler<Object> {
-        private static final Logger logger = LogManager.getLogger(ServerSentEventsHandler.class);
+        private static final Logger logger = LoggerFactory.getLogger(ServerSentEventsHandler.class);
         private final CountDownLatch waitLatch;
 
         private ServerSentEventsHandler(CountDownLatch waitLatch) {
@@ -151,25 +161,25 @@ public class HttpActorSystemTest {
 
         @Override
         public void onThrowable(Throwable t) {
-            logger.error(t);
+            logger.error("Received throwable", t);
             waitLatch.countDown();
         }
 
         @Override
-        public STATE onBodyPartReceived(HttpResponseBodyPart bodyPart) throws Exception {
+        public State onBodyPartReceived(HttpResponseBodyPart bodyPart) throws Exception {
             logger.info(new String(bodyPart.getBodyPartBytes(), Charsets.UTF_8));
-            return STATE.CONTINUE;
+            return State.CONTINUE;
         }
 
         @Override
-        public STATE onStatusReceived(HttpResponseStatus responseStatus) throws Exception {
-            logger.info(responseStatus.getStatusCode());
-            return STATE.CONTINUE;
+        public State onStatusReceived(HttpResponseStatus responseStatus) throws Exception {
+            logger.info("Received status code: {}", responseStatus.getStatusCode());
+            return State.CONTINUE;
         }
 
         @Override
-        public STATE onHeadersReceived(HttpResponseHeaders headers) throws Exception {
-            return STATE.CONTINUE;
+        public State onHeadersReceived(HttpHeaders headers) throws Exception {
+            return State.CONTINUE;
         }
 
         @Override

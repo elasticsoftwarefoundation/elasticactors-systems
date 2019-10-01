@@ -16,30 +16,37 @@
 
 package org.elasticsoftware.elasticactors.http.actors;
 
-import com.ning.http.client.AsyncCompletionHandler;
-import com.ning.http.client.AsyncHttpClient;
-import com.ning.http.client.AsyncHttpClientConfig;
-import com.ning.http.client.Response;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.asynchttpclient.AsyncCompletionHandler;
+import org.asynchttpclient.AsyncHttpClient;
+import org.asynchttpclient.AsyncHttpClientConfig;
+import org.asynchttpclient.BoundRequestBuilder;
+import org.asynchttpclient.DefaultAsyncHttpClient;
+import org.asynchttpclient.DefaultAsyncHttpClientConfig;
+import org.asynchttpclient.Response;
 import org.elasticsoftware.elasticactors.ActorRef;
 import org.elasticsoftware.elasticactors.ServiceActor;
 import org.elasticsoftware.elasticactors.TypedActor;
 import org.elasticsoftware.elasticactors.http.messages.HttpRequest;
 import org.elasticsoftware.elasticactors.http.messages.HttpResponse;
 import org.jboss.netty.handler.codec.http.HttpMethod;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 /**
  * @author Joost van de Wijgerd
  */
 @ServiceActor("httpClient")
 public final class HttpClientService extends TypedActor<HttpRequest> {
-    private static final Logger logger = LogManager.getLogger(HttpClientService.class);
+    private static final Logger logger = LoggerFactory.getLogger(HttpClientService.class);
     private AsyncHttpClient httpClient;
 
     public HttpClientService() {
@@ -47,14 +54,16 @@ public final class HttpClientService extends TypedActor<HttpRequest> {
 
     @PostConstruct
     public void init() {
-        AsyncHttpClientConfig config =
-                new AsyncHttpClientConfig.Builder().setCompressionEnabled(true).setFollowRedirects(true).build();
-        httpClient = new AsyncHttpClient(config);
+        AsyncHttpClientConfig config = new DefaultAsyncHttpClientConfig.Builder()
+                .setCompressionEnforced(true)
+                .setFollowRedirect(true)
+                .build();
+        httpClient = new DefaultAsyncHttpClient(config);
     }
 
     @PreDestroy
-    public void destroy() {
-        httpClient.close();;
+    public void destroy() throws IOException {
+        httpClient.close();
     }
 
     @Override
@@ -69,16 +78,12 @@ public final class HttpClientService extends TypedActor<HttpRequest> {
                     .setBody(message.getContent())
                     .execute(new ResponseHandler(getSelf(), sender));
         } else {
-            logger.error("Unhandled request method: "+method);
+            logger.error("Unhandled request method: {}", method);
         }
     }
 
-    private AsyncHttpClient.BoundRequestBuilder setHeaders(AsyncHttpClient.BoundRequestBuilder requestBuilder,Map<String,List<String>> headers) {
-        for (Map.Entry<String, List<String>> entry : headers.entrySet()) {
-            for (String value : entry.getValue()) {
-                requestBuilder.setHeader(entry.getKey(),value);
-            }
-        }
+    private BoundRequestBuilder setHeaders(BoundRequestBuilder requestBuilder,Map<String,List<String>> headers) {
+        headers.forEach(requestBuilder::setHeader);
         return requestBuilder;
     }
 
@@ -95,9 +100,13 @@ public final class HttpClientService extends TypedActor<HttpRequest> {
         public Integer onCompleted(Response response) throws Exception {
             // get the headers
 
-            Map<String,List<String>> headers = response.getHeaders();
+            Map<String, List<String>> headerMap =
+                    StreamSupport.stream(response.getHeaders().spliterator(), false)
+                            .collect(Collectors.groupingBy(
+                                    Entry::getKey,
+                                    Collectors.mapping(Entry::getValue, Collectors.toList())));
             replyAddress.tell(new HttpResponse(response.getStatusCode(),
-                                               headers,
+                                               headerMap,
                                                response.getResponseBodyAsBytes()),serviceAddress);
             return response.getStatusCode();
         }
