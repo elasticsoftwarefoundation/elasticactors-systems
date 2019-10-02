@@ -17,7 +17,6 @@
 package org.elasticsoftware.elasticactors.http;
 
 
-import com.google.common.base.Charsets;
 import io.netty.handler.codec.http.HttpHeaders;
 import org.asynchttpclient.AsyncHandler;
 import org.asynchttpclient.AsyncHttpClient;
@@ -167,7 +166,7 @@ public class HttpActorSystemTest {
 
         @Override
         public State onBodyPartReceived(HttpResponseBodyPart bodyPart) throws Exception {
-            logger.info(new String(bodyPart.getBodyPartBytes(), Charsets.UTF_8));
+            logger.info(new String(bodyPart.getBodyPartBytes(), StandardCharsets.UTF_8));
             return State.CONTINUE;
         }
 

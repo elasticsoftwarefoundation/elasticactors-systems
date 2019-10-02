@@ -16,7 +16,6 @@
 
 package org.elasticsoftware.elasticactors.http.actors;
 
-import com.google.common.base.Charsets;
 import org.elasticsoftware.elasticactors.Actor;
 import org.elasticsoftware.elasticactors.ActorRef;
 import org.elasticsoftware.elasticactors.TypedActor;
@@ -27,7 +26,8 @@ import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,7 +51,7 @@ public final class User extends TypedActor<HttpRequest> {
         logger.info("Got request");
         // send something back
         Map<String,List<String>> headers = new HashMap<>();
-        headers.put(HttpHeaders.Names.CONTENT_TYPE, Arrays.asList("text/plain"));
-        sender.tell(new HttpResponse(200, headers, "HelloWorld".getBytes(Charsets.UTF_8)), getSelf());
+        headers.put(HttpHeaders.Names.CONTENT_TYPE, Collections.singletonList("text/plain"));
+        sender.tell(new HttpResponse(200, headers, "HelloWorld".getBytes(StandardCharsets.UTF_8)), getSelf());
     }
 }

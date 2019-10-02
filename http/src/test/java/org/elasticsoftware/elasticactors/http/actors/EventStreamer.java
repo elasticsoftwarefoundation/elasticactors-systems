@@ -27,7 +27,7 @@ import org.elasticsoftware.elasticactors.http.messages.SseResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -49,7 +49,7 @@ public final class EventStreamer extends UntypedActor {
         if(message instanceof HttpRequest) {
             handle(sender,(HttpRequest) message);
         } else if(message instanceof String) {
-            sender.tell(new ServerSentEvent("testing","event",Arrays.asList((String)message),null),getSelf());
+            sender.tell(new ServerSentEvent("testing","event", Collections.singletonList((String) message),null),getSelf());
             getSystem().getScheduler().scheduleOnce(sender,("Ping".equals(message)) ? "Pong" : "Ping",getSelf(),10, TimeUnit.SECONDS);
         }
     }

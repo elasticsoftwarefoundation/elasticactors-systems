@@ -1,6 +1,5 @@
 package org.elasticsoftware.elasticactors.broadcast;
 
-import com.google.common.base.Charsets;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.hash.Hashing;
@@ -26,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Configurable;
 
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -248,7 +248,7 @@ public final class Broadcaster extends MethodActor {
     private Multimap<ActorRef, ActorRef> mapToBucket(Set<ActorRef> members, BroadcasterState state) {
         Multimap<ActorRef,ActorRef> sendMap = ArrayListMultimap.create();
         for (ActorRef actorRef : members) {
-            int idx = Math.abs(Hashing.murmur3_32().hashString(format("%s:%s",getSelf().getActorId(),actorRef.toString()), Charsets.UTF_8).asInt()) % state.getBucketsPerNode();
+            int idx = Math.abs(Hashing.murmur3_32().hashString(format("%s:%s",getSelf().getActorId(),actorRef), StandardCharsets.UTF_8).asInt()) % state.getBucketsPerNode();
             sendMap.put(state.getNodes().get(idx), actorRef);
         }
         return sendMap;
@@ -257,7 +257,7 @@ public final class Broadcaster extends MethodActor {
     private Multimap<String, ActorRef> mapToBucket(Set<ActorRef> members, List<String> nodeIds) {
         Multimap<String,ActorRef> sendMap = ArrayListMultimap.create();
         for (ActorRef actorRef : members) {
-            int idx = Math.abs(Hashing.murmur3_32().hashString(format("%s:%s", getSelf().getActorId(), actorRef.toString()), Charsets.UTF_8).asInt()) % nodeIds.size();
+            int idx = Math.abs(Hashing.murmur3_32().hashString(format("%s:%s", getSelf().getActorId(), actorRef), StandardCharsets.UTF_8).asInt()) % nodeIds.size();
             sendMap.put(nodeIds.get(idx), actorRef);
         }
         return sendMap;
