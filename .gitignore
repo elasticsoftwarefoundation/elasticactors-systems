@@ -12,3 +12,4 @@ target/
 
 # Other stuff
 *.bat
+*.versionsBackup
