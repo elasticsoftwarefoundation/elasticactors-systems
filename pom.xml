@@ -19,7 +19,7 @@
 
     <groupId>org.elasticsoftware.elasticactors-systems</groupId>
     <artifactId>elasticactors-systems</artifactId>
-    <version>0.9.1-SNAPSHOT</version>
+    <version>1.8.2-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Elastic Software Foundation :: ElasticActors :: ElasticSystems</name>
     <url>https://github.com/elasticsoftwarefoundation/elasticactors-systems</url>
@@ -27,7 +27,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <elasticactors.version>2.0.0</elasticactors.version>
+        <elasticactors.version>1.8.2-SNAPSHOT</elasticactors.version>
         <slf4j.version>1.7.28</slf4j.version>
         <spring.version>5.1.9.RELEASE</spring.version>
 
