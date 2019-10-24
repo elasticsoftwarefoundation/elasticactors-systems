@@ -16,7 +16,6 @@
 
 package org.elasticsoftware.elasticactors.http.codec;
 
-import org.elasticsoftware.elasticactors.base.util.Charsets;
 import org.elasticsoftware.elasticactors.http.messages.ServerSentEvent;
 import org.elasticsoftware.elasticactors.http.messages.SseResponse;
 import org.jboss.netty.buffer.ChannelBuffer;
@@ -26,21 +25,26 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.HttpVersion;
 import org.jboss.netty.handler.codec.oneone.OneToOneEncoder;
 
-import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
 
 import static org.jboss.netty.buffer.ChannelBuffers.dynamicBuffer;
-import static org.jboss.netty.handler.codec.http.HttpConstants.*;
+import static org.jboss.netty.handler.codec.http.HttpConstants.COLON;
+import static org.jboss.netty.handler.codec.http.HttpConstants.CR;
+import static org.jboss.netty.handler.codec.http.HttpConstants.LF;
+import static org.jboss.netty.handler.codec.http.HttpConstants.SP;
+
+import static java.nio.charset.StandardCharsets.US_ASCII;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * @author Joost van de Wijgerd
  */
 public final class ServerSentEventEncoder extends OneToOneEncoder {
-    private static final Charset ASCII = Charset.forName("ASCII");
-    private static final byte[] EVENT = "event".getBytes(Charsets.UTF_8);
-    private static final byte[] DATA = "data".getBytes(Charsets.UTF_8);
-    private static final byte[] ID = "id".getBytes(Charsets.UTF_8);
+
+    private static final byte[] EVENT = "event".getBytes(UTF_8);
+    private static final byte[] DATA = "data".getBytes(UTF_8);
+    private static final byte[] ID = "id".getBytes(UTF_8);
 
     @Override
     protected Object encode(ChannelHandlerContext ctx, Channel channel, Object msg) throws Exception {
@@ -59,7 +63,7 @@ public final class ServerSentEventEncoder extends OneToOneEncoder {
                 event.writeBytes(EVENT);
                 event.writeByte(COLON);
                 event.writeByte(SP);
-                event.writeBytes(m.getEvent().getBytes(Charsets.UTF_8));
+                event.writeBytes(m.getEvent().getBytes(UTF_8));
                 event.writeByte(CR);
                 event.writeByte(LF);
             }
@@ -68,7 +72,7 @@ public final class ServerSentEventEncoder extends OneToOneEncoder {
                     event.writeBytes(DATA);
                     event.writeByte(COLON);
                     event.writeByte(SP);
-                    event.writeBytes(data.getBytes(Charsets.UTF_8));
+                    event.writeBytes(data.getBytes(UTF_8));
                     event.writeByte(CR);
                     event.writeByte(LF);
                 }
@@ -77,7 +81,7 @@ public final class ServerSentEventEncoder extends OneToOneEncoder {
                 event.writeBytes(ID);
                 event.writeByte(COLON);
                 event.writeByte(SP);
-                event.writeBytes(m.getId().getBytes(Charsets.UTF_8));
+                event.writeBytes(m.getId().getBytes(UTF_8));
                 event.writeByte(CR);
                 event.writeByte(LF);
             }
@@ -91,11 +95,11 @@ public final class ServerSentEventEncoder extends OneToOneEncoder {
     }
 
     private void encodeInitialLine(ChannelBuffer buf) {
-        buf.writeBytes(HttpVersion.HTTP_1_1.toString().getBytes(ASCII));
+        buf.writeBytes(HttpVersion.HTTP_1_1.toString().getBytes(US_ASCII));
         buf.writeByte(SP);
-        buf.writeBytes(String.valueOf(HttpResponseStatus.OK.getCode()).getBytes(ASCII));
+        buf.writeBytes(String.valueOf(HttpResponseStatus.OK.getCode()).getBytes(US_ASCII));
         buf.writeByte(SP);
-        buf.writeBytes(String.valueOf(HttpResponseStatus.OK.getReasonPhrase()).getBytes(ASCII));
+        buf.writeBytes(String.valueOf(HttpResponseStatus.OK.getReasonPhrase()).getBytes(US_ASCII));
         buf.writeByte(CR);
         buf.writeByte(LF);
     }
@@ -109,10 +113,10 @@ public final class ServerSentEventEncoder extends OneToOneEncoder {
     }
 
     private static void encodeHeader(ChannelBuffer buf, String header, String value) {
-        buf.writeBytes(header.getBytes(ASCII));
+        buf.writeBytes(header.getBytes(US_ASCII));
         buf.writeByte(COLON);
         buf.writeByte(SP);
-        buf.writeBytes(value.getBytes(ASCII));
+        buf.writeBytes(value.getBytes(US_ASCII));
         buf.writeByte(CR);
         buf.writeByte(LF);
     }

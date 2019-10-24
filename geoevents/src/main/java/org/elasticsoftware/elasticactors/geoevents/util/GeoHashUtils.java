@@ -38,7 +38,7 @@ public final class GeoHashUtils {
         GeoHash leftTop = GeoHash.withCharacterPrecision(bbox[1].getLatitudeInDegrees(), bbox[0].getLongitudeInDegrees(), characterPrecision);
 
 
-        List<GeoHash> matrix = new LinkedList<GeoHash>();
+        List<GeoHash> matrix = new LinkedList<>();
         int rows = calculateRows(leftTop, leftBottom);
         int cols = calculateColumns(leftTop, rightTop);
 

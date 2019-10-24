@@ -16,8 +16,6 @@
 
 package org.elasticsoftware.elasticactors.http.actors;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.elasticsoftware.elasticactors.Actor;
 import org.elasticsoftware.elasticactors.ActorRef;
 import org.elasticsoftware.elasticactors.UntypedActor;
@@ -26,8 +24,10 @@ import org.elasticsoftware.elasticactors.http.messages.HttpRequest;
 import org.elasticsoftware.elasticactors.http.messages.RegisterRouteMessage;
 import org.elasticsoftware.elasticactors.http.messages.ServerSentEvent;
 import org.elasticsoftware.elasticactors.http.messages.SseResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -35,7 +35,7 @@ import java.util.concurrent.TimeUnit;
  */
 @Actor(serializationFramework = JacksonSerializationFramework.class)
 public final class EventStreamer extends UntypedActor {
-    private static final Logger logger = LogManager.getLogger(EventStreamer.class);
+    private static final Logger logger = LoggerFactory.getLogger(EventStreamer.class);
 
     @Override
     public void postActivate(String previousVersion) throws Exception {
@@ -49,7 +49,7 @@ public final class EventStreamer extends UntypedActor {
         if(message instanceof HttpRequest) {
             handle(sender,(HttpRequest) message);
         } else if(message instanceof String) {
-            sender.tell(new ServerSentEvent("testing","event",Arrays.asList((String)message),null),getSelf());
+            sender.tell(new ServerSentEvent("testing","event", Collections.singletonList((String) message),null),getSelf());
             getSystem().getScheduler().scheduleOnce(sender,("Ping".equals(message)) ? "Pong" : "Ping",getSelf(),10, TimeUnit.SECONDS);
         }
     }

@@ -43,7 +43,7 @@ public final class Scanner extends TypedActor<ScanResponse> {
             this.replyAddress = replyAddress;
             this.request = request;
             this.runningRequests = runningRequests;
-            this.response = new ScanResponse(request.getId(),new LinkedList<ScanResponse.ScanResult>());
+            this.response = new ScanResponse(request.getId(), new LinkedList<>());
         }
 
         @Override

@@ -16,8 +16,6 @@
 
 package org.elasticsoftware.elasticactors.geoevents;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.elasticsoftware.elasticactors.ActorRef;
 import org.elasticsoftware.elasticactors.ActorSystem;
 import org.elasticsoftware.elasticactors.geoevents.actors.TestActor;
@@ -26,6 +24,8 @@ import org.elasticsoftware.elasticactors.geoevents.messages.RegisterInterest;
 import org.elasticsoftware.elasticactors.serialization.NoopSerializationFramework;
 import org.elasticsoftware.elasticactors.serialization.SerializationFramework;
 import org.elasticsoftware.elasticactors.test.TestActorSystem;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -41,7 +41,7 @@ import static org.testng.Assert.assertTrue;
  * @author Joost van de Wijgerd
  */
 public class GeoEventsActorSystemTest {
-    private static final Logger logger = LogManager.getLogger(GeoEventsActorSystemTest.class);
+    private static final Logger logger = LoggerFactory.getLogger(GeoEventsActorSystemTest.class);
 
     private TestActorSystem testActorSystem;
 
@@ -94,7 +94,7 @@ public class GeoEventsActorSystemTest {
         });
 
         // publish event at the eBuddy office
-        Map<String,Object> customProperties = new LinkedHashMap<String,Object>();
+        Map<String,Object> customProperties = new LinkedHashMap<>();
         customProperties.put("name","Joost van de Wijgerd");
         dispatcher.tell(new PublishLocation(publisher,new Coordinate(52.364207d,4.891793d),3600,customProperties),publisher);
 

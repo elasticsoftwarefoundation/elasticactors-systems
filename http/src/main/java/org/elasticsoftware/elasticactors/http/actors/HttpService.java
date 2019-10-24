@@ -16,13 +16,17 @@
 
 package org.elasticsoftware.elasticactors.http.actors;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.elasticsoftware.elasticactors.*;
+import org.elasticsoftware.elasticactors.ActorRef;
+import org.elasticsoftware.elasticactors.ActorSystem;
+import org.elasticsoftware.elasticactors.ActorSystemConfiguration;
+import org.elasticsoftware.elasticactors.ServiceActor;
+import org.elasticsoftware.elasticactors.UntypedActor;
 import org.elasticsoftware.elasticactors.http.HttpServer;
 import org.elasticsoftware.elasticactors.http.messages.HttpRequest;
 import org.elasticsoftware.elasticactors.http.messages.RegisterRouteMessage;
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.PathMatcher;
 
@@ -30,7 +34,6 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -44,8 +47,8 @@ import java.util.concurrent.Executors;
 // @todo: need to make sure spring can take the name from ServiceActor annotation
 @ServiceActor("httpServer")
 public final class HttpService extends UntypedActor {
-    private static final Logger logger = LogManager.getLogger(HttpService.class);
-    private final ConcurrentMap<String,ActorRef> routes = new ConcurrentHashMap<String,ActorRef>();
+    private static final Logger logger = LoggerFactory.getLogger(HttpService.class);
+    private final ConcurrentMap<String,ActorRef> routes = new ConcurrentHashMap<>();
     private final PathMatcher pathMatcher = new AntPathMatcher();
     private final ActorSystem actorSystem;
     private final ActorSystemConfiguration configuration;
@@ -77,18 +80,18 @@ public final class HttpService extends UntypedActor {
         if(message instanceof RegisterRouteMessage) {
             RegisterRouteMessage registerRouteMessage = (RegisterRouteMessage) message;
             routes.putIfAbsent(registerRouteMessage.getPattern(),registerRouteMessage.getHandlerRef());
-            logger.info(String.format("Adding Route with pattern [%s] for Actor [%s]",registerRouteMessage.getPattern(),registerRouteMessage.getHandlerRef().toString()));
+            logger.info("Adding Route with pattern [{}] for Actor [{}]",registerRouteMessage.getPattern(),registerRouteMessage.getHandlerRef());
         } else {
-            logger.warn("Received a message that is not understood: "+message.getClass().getSimpleName());
+            logger.warn("Received a message that is not understood: {}", message.getClass().getSimpleName());
         }
     }
 
     public boolean doDispatch(HttpRequest request,ActorRef replyAddress) {
-        logger.info(String.format("Dispatching Request [%s]",request.getUrl()));
+        logger.info("Dispatching Request [{}]",request.getUrl());
         // match for routes, for now no fancy matching
         ActorRef handlerRef = getHandler(request.getUrl());
         if(handlerRef != null) {
-            logger.info(String.format("Found actor [%s]",handlerRef.toString()));
+            logger.info("Found actor [{}]",handlerRef);
             handlerRef.tell(request,replyAddress);
             return true;
         } else {
@@ -104,7 +107,7 @@ public final class HttpService extends UntypedActor {
             return handlerRef;
         }
         // Pattern match?
-        List<String> matchingPatterns = new ArrayList<String>();
+        List<String> matchingPatterns = new ArrayList<>();
         for (String registeredPattern : this.routes.keySet()) {
             if (pathMatcher.match(registeredPattern, urlPath)) {
                 matchingPatterns.add(registeredPattern);
@@ -113,9 +116,9 @@ public final class HttpService extends UntypedActor {
         String bestPatternMatch = null;
         Comparator<String> patternComparator = pathMatcher.getPatternComparator(urlPath);
         if (!matchingPatterns.isEmpty()) {
-            Collections.sort(matchingPatterns, patternComparator);
+            matchingPatterns.sort(patternComparator);
             if (logger.isDebugEnabled()) {
-                logger.debug("Matching patterns for request [" + urlPath + "] are " + matchingPatterns);
+                logger.debug("Matching patterns for request [{}] are {}", urlPath, matchingPatterns);
             }
             bestPatternMatch = matchingPatterns.get(0);
         }

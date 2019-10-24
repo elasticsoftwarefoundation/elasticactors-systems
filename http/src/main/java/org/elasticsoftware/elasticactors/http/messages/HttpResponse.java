@@ -27,8 +27,10 @@ import java.util.Map;
 /**
  * @author Joost van de Wijgerd
  */
-@Message(serializationFramework = JacksonSerializationFramework.class,
-         durable = false)
+@Message(
+        serializationFramework = JacksonSerializationFramework.class,
+        durable = false,
+        immutable = true)
 public class HttpResponse extends HttpMessage {
     private final int statusCode;
 

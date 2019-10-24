@@ -1,17 +1,19 @@
 package org.elasticsoftware.elasticactors.masterservice;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.elasticsoftware.elasticactors.*;
+import org.elasticsoftware.elasticactors.ActorRef;
+import org.elasticsoftware.elasticactors.ActorSystem;
+import org.elasticsoftware.elasticactors.MethodActor;
+import org.elasticsoftware.elasticactors.PhysicalNode;
+import org.elasticsoftware.elasticactors.ServiceActor;
 import org.elasticsoftware.elasticactors.cluster.ClusterEventListener;
 import org.elasticsoftware.elasticactors.cluster.ClusterService;
 import org.elasticsoftware.elasticactors.masterservice.messages.MasterElected;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-
-import static java.lang.String.format;
 
 /**
  * @author Joost van de Wijgerd
@@ -20,7 +22,7 @@ public abstract class MasterService extends MethodActor implements ClusterEventL
     // @todo: we need this because leadership events are generated before the ElasticActors runtime is up
     private final AtomicReference<MasterElected> pendingMasterElected = new AtomicReference<>(null);
     private final AtomicBoolean activated = new AtomicBoolean(false);
-    private final Logger logger = LogManager.getLogger(getClass());
+    private final Logger logger = LoggerFactory.getLogger(getClass());
     private final ActorSystem actorSystem;
     private final ClusterService clusterService;
     private final ActorRef self;
@@ -66,7 +68,7 @@ public abstract class MasterService extends MethodActor implements ClusterEventL
     @Override
     public final void onMasterElected(PhysicalNode masterNode) throws Exception {
         // @todo: see if we are master, otherwise relay all messages to trading service on master
-        logger.info(format("New Master Elected: %s",masterNode.toString()));
+        logger.info("New Master Elected: {}",masterNode);
         // @todo: probably send message to self in order to become the master
         // @todo: at startup this is too early
         // self.tell(new MasterElected(masterNode.getId(),masterNode.isLocal()),self);

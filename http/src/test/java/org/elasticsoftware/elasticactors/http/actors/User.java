@@ -16,9 +16,6 @@
 
 package org.elasticsoftware.elasticactors.http.actors;
 
-import com.google.common.base.Charsets;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.elasticsoftware.elasticactors.Actor;
 import org.elasticsoftware.elasticactors.ActorRef;
 import org.elasticsoftware.elasticactors.TypedActor;
@@ -26,8 +23,11 @@ import org.elasticsoftware.elasticactors.base.serialization.JacksonSerialization
 import org.elasticsoftware.elasticactors.http.messages.HttpRequest;
 import org.elasticsoftware.elasticactors.http.messages.HttpResponse;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,7 +37,7 @@ import java.util.Map;
  */
 @Actor(serializationFramework = JacksonSerializationFramework.class)
 public final class User extends TypedActor<HttpRequest> {
-    private static final Logger logger = LogManager.getLogger(User.class);
+    private static final Logger logger = LoggerFactory.getLogger(User.class);
 
     @Override
     public void postActivate(String previousVersion) throws Exception {
@@ -50,8 +50,8 @@ public final class User extends TypedActor<HttpRequest> {
     public void onReceive(ActorRef sender, HttpRequest message) throws Exception {
         logger.info("Got request");
         // send something back
-        Map<String,List<String>> headers = new HashMap<String,List<String>>();
-        headers.put(HttpHeaders.Names.CONTENT_TYPE, Arrays.asList("text/plain"));
-        sender.tell(new HttpResponse(200, headers, "HelloWorld".getBytes(Charsets.UTF_8)), getSelf());
+        Map<String,List<String>> headers = new HashMap<>();
+        headers.put(HttpHeaders.Names.CONTENT_TYPE, Collections.singletonList("text/plain"));
+        sender.tell(new HttpResponse(200, headers, "HelloWorld".getBytes(StandardCharsets.UTF_8)), getSelf());
     }
 }

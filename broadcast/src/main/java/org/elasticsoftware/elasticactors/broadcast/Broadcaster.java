@@ -1,29 +1,40 @@
 package org.elasticsoftware.elasticactors.broadcast;
 
-import com.google.common.base.Charsets;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.hash.Hashing;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.elasticsoftware.elasticactors.*;
+import org.elasticsoftware.elasticactors.Actor;
+import org.elasticsoftware.elasticactors.ActorRef;
+import org.elasticsoftware.elasticactors.ActorSystem;
+import org.elasticsoftware.elasticactors.MessageHandler;
+import org.elasticsoftware.elasticactors.MessageHandlers;
+import org.elasticsoftware.elasticactors.MethodActor;
 import org.elasticsoftware.elasticactors.base.serialization.JacksonSerializationFramework;
 import org.elasticsoftware.elasticactors.broadcast.handlers.RehashHandlers;
-import org.elasticsoftware.elasticactors.broadcast.messages.*;
+import org.elasticsoftware.elasticactors.broadcast.messages.Add;
+import org.elasticsoftware.elasticactors.broadcast.messages.LeafNodesRequest;
+import org.elasticsoftware.elasticactors.broadcast.messages.LeafNodesResponse;
+import org.elasticsoftware.elasticactors.broadcast.messages.Remove;
+import org.elasticsoftware.elasticactors.broadcast.messages.ThrottledMessage;
+import org.elasticsoftware.elasticactors.broadcast.messages.UpdateThrottleConfig;
 import org.elasticsoftware.elasticactors.broadcast.state.BroadcasterState;
 import org.elasticsoftware.elasticactors.broadcast.state.ThrottledBroadcastSession;
 import org.elasticsoftware.elasticactors.state.PersistenceConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Configurable;
 
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static com.google.common.collect.Sets.newHashSet;
-import static java.lang.String.format;
 import static org.elasticsoftware.elasticactors.state.ActorLifecycleStep.CREATE;
+
+import static java.lang.String.format;
 
 /**
  * @author Joost van de Wijgerd
@@ -33,7 +44,7 @@ import static org.elasticsoftware.elasticactors.state.ActorLifecycleStep.CREATE;
 @MessageHandlers(RehashHandlers.class)
 @Configurable
 public final class Broadcaster extends MethodActor {
-    private static final Logger logger = LogManager.getLogger(Broadcaster.class);
+    private static final Logger logger = LoggerFactory.getLogger(Broadcaster.class);
     private JacksonSerializationFramework serializationFramework;
 
     @Override
@@ -72,10 +83,10 @@ public final class Broadcaster extends MethodActor {
     public void handleRemove(Remove remove,BroadcasterState state) {
         if (state.getCurrentlyRehashing()) {
             if (state.getRehashRoot()) {
-                logger.info(String.format("Received remove request, but broadcaster <%s> is currently rehashing. Saving message for when rehashing will be done", getSelf().getActorId()));
+                logger.info("Received remove request, but broadcaster <{}> is currently rehashing. Saving message for when rehashing will be done", getSelf().getActorId());
                 state.getReceivedDuringRehashing().add(remove);
             } else {
-                logger.error(String.format("Received remove request, but broadcaster <%s> is currently rehashing and is not the root!. This should not happen, ignoring remove request.", getSelf().getActorId()));
+                logger.error("Received remove request, but broadcaster <{}> is currently rehashing and is not the root!. This should not happen, ignoring remove request.", getSelf().getActorId());
             }
 
             return;
@@ -99,10 +110,10 @@ public final class Broadcaster extends MethodActor {
     public void handleAdd(Add add,BroadcasterState state) throws Exception {
         if (state.getCurrentlyRehashing()) {
             if (state.getRehashRoot()) {
-                logger.info(String.format("Received add request, but broadcaster <%s> is currently rehashing. Saving message for when rehashing will be done", getSelf().getActorId()));
+                logger.info("Received add request, but broadcaster <{}> is currently rehashing. Saving message for when rehashing will be done", getSelf().getActorId());
                 state.getReceivedDuringRehashing().add(add);
             } else {
-                logger.error(String.format("Received add request, but broadcaster <%s> is currently rehashing and is not the root!. This should not happen, ignoring add request.", getSelf().getActorId()));
+                logger.error("Received add request, but broadcaster <{}> is currently rehashing and is not the root!. This should not happen, ignoring add request.", getSelf().getActorId());
             }
 
             return;
@@ -178,7 +189,7 @@ public final class Broadcaster extends MethodActor {
             // delegate to onUnhandled
             onUnhandled(message.getSender(), originalMessage);
         } catch(Exception e) {
-            logger.error(String.format("Unexpected Exception scheduling throttled message of type [%s] from sender [%s]", message.getMessageClass(), message.getSender().toString()), e);
+            logger.error("Unexpected Exception scheduling throttled message of type [{}] from sender [{}]", message.getMessageClass(), message.getSender(), e);
         }
     }
 
@@ -202,7 +213,7 @@ public final class Broadcaster extends MethodActor {
                 count += 1;
             }
         } catch(Exception e) {
-            logger.error(String.format("Unexpected Exception scheduling throttled message of type [%s] from sender [%s]", session.getMessage().getClass().getName(), session.getSender().toString()), e);
+            logger.error("Unexpected Exception scheduling throttled message of type [{}] from sender [{}]", session.getMessage().getClass().getName(), session.getSender(), e);
         }
     }
 
@@ -237,7 +248,7 @@ public final class Broadcaster extends MethodActor {
     private Multimap<ActorRef, ActorRef> mapToBucket(Set<ActorRef> members, BroadcasterState state) {
         Multimap<ActorRef,ActorRef> sendMap = ArrayListMultimap.create();
         for (ActorRef actorRef : members) {
-            int idx = Math.abs(Hashing.murmur3_32().hashString(format("%s:%s",getSelf().getActorId(),actorRef.toString()), Charsets.UTF_8).asInt()) % state.getBucketsPerNode();
+            int idx = Math.abs(Hashing.murmur3_32().hashString(format("%s:%s",getSelf().getActorId(),actorRef), StandardCharsets.UTF_8).asInt()) % state.getBucketsPerNode();
             sendMap.put(state.getNodes().get(idx), actorRef);
         }
         return sendMap;
@@ -246,7 +257,7 @@ public final class Broadcaster extends MethodActor {
     private Multimap<String, ActorRef> mapToBucket(Set<ActorRef> members, List<String> nodeIds) {
         Multimap<String,ActorRef> sendMap = ArrayListMultimap.create();
         for (ActorRef actorRef : members) {
-            int idx = Math.abs(Hashing.murmur3_32().hashString(format("%s:%s", getSelf().getActorId(), actorRef.toString()), Charsets.UTF_8).asInt()) % nodeIds.size();
+            int idx = Math.abs(Hashing.murmur3_32().hashString(format("%s:%s", getSelf().getActorId(), actorRef), StandardCharsets.UTF_8).asInt()) % nodeIds.size();
             sendMap.put(nodeIds.get(idx), actorRef);
         }
         return sendMap;

@@ -48,7 +48,7 @@ public abstract class HttpMessage {
 
     public final List<String> getHeaders(String name) {
         List<String> headerValues = headers.get(name);
-        return headerValues == null || headerValues.isEmpty() ? Collections.<String>emptyList() : headerValues;
+        return headerValues == null || headerValues.isEmpty() ? Collections.emptyList() : headerValues;
     }
 
     @JsonIgnore

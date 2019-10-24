@@ -21,8 +21,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.elasticsoftware.elasticactors.base.serialization.JacksonSerializationFramework;
 import org.elasticsoftware.elasticactors.serialization.Message;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
+import org.jboss.netty.handler.codec.http.HttpHeaders.Values;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * This will start a Server Sent Events stream to the client. The headers and response code will be sent to the
@@ -36,13 +40,13 @@ import java.util.*;
 public final class SseResponse extends HttpResponse {
     private static final Map<String,List<String>> DEFAULT_HEADERS =
             Collections.unmodifiableMap(new LinkedHashMap<String,List<String>>() {{
-        put(HttpHeaders.Names.CONTENT_TYPE, Arrays.asList("text/event-stream"));
-        put(HttpHeaders.Names.CACHE_CONTROL,Arrays.asList(HttpHeaders.Values.NO_CACHE));
-        put(HttpHeaders.Names.ACCESS_CONTROL_ALLOW_ORIGIN,Arrays.asList("*"));
+        put(HttpHeaders.Names.CONTENT_TYPE, Collections.singletonList("text/event-stream"));
+        put(HttpHeaders.Names.CACHE_CONTROL, Collections.singletonList(Values.NO_CACHE));
+        put(HttpHeaders.Names.ACCESS_CONTROL_ALLOW_ORIGIN, Collections.singletonList("*"));
     }});
 
     public SseResponse() {
-        this(200,new LinkedHashMap<String, List<String>>(DEFAULT_HEADERS));
+        this(200, new LinkedHashMap<>(DEFAULT_HEADERS));
     }
 
     @JsonCreator
