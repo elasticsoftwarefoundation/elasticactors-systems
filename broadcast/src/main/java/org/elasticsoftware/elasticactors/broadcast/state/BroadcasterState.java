@@ -1,11 +1,20 @@
 package org.elasticsoftware.elasticactors.broadcast.state;
 
-import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.Sets;
 import org.elasticsoftware.elasticactors.ActorRef;
 import org.elasticsoftware.elasticactors.base.state.JacksonActorState;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 import static com.google.common.collect.Maps.newHashMap;
@@ -21,7 +30,6 @@ public final class BroadcasterState extends JacksonActorState<BroadcasterState> 
     private final List<ActorRef> nodes;
     private final Set<ActorRef> leaves;
     private boolean leafNode = true;
-    private ThrottleConfig throttleConfig;
     private final transient Map<String,ThrottledBroadcastSession> throttledBroadcasts = newHashMap();
     private int size = 0;
 
@@ -39,15 +47,6 @@ public final class BroadcasterState extends JacksonActorState<BroadcasterState> 
         this.bucketSize = bucketSize;
         this.leaves = Sets.newHashSet();
         this.nodes = new LinkedList<>();
-        this.throttleConfig = null;
-    }
-
-    public BroadcasterState(int bucketsPerNode, int bucketSize, ThrottleConfig throttleConfig) {
-        this.bucketsPerNode = bucketsPerNode;
-        this.bucketSize = bucketSize;
-        this.leaves = Sets.newHashSet();
-        this.nodes = new LinkedList<>();
-        this.throttleConfig = throttleConfig;
     }
 
     public BroadcasterState(int bucketsPerNode, int bucketSize, Collection<ActorRef> leaves) {
@@ -56,7 +55,6 @@ public final class BroadcasterState extends JacksonActorState<BroadcasterState> 
         this.leaves = Sets.newHashSet(leaves);
         this.nodes = new LinkedList<>();
         this.size = this.leaves.size();
-        this.throttleConfig = null;
     }
 
     @JsonCreator
@@ -64,14 +62,12 @@ public final class BroadcasterState extends JacksonActorState<BroadcasterState> 
                             @JsonProperty("bucketSize") int bucketSize,
                             @JsonProperty("nodes") List<ActorRef> nodes,
                             @JsonProperty("leaves") Set<ActorRef> leaves,
-                            @JsonProperty("size") int size,
-                            @JsonProperty("throttleConfig") ThrottleConfig throttleConfig) {
+                            @JsonProperty("size") int size) {
         this.bucketsPerNode = bucketsPerNode;
         this.bucketSize = bucketSize;
         this.nodes = nodes;
         this.leaves = leaves;
         this.size = size;
-        this.throttleConfig = throttleConfig;
     }
 
     @Override
@@ -105,14 +101,6 @@ public final class BroadcasterState extends JacksonActorState<BroadcasterState> 
 
     public int getSize() {
         return leafNode ? leaves.size() : size;
-    }
-
-    public ThrottleConfig getThrottleConfig() {
-        return throttleConfig;
-    }
-
-    public void setThrottleConfig(ThrottleConfig throttleConfig) {
-        this.throttleConfig = throttleConfig;
     }
 
     public void incrementSize(int increment) {

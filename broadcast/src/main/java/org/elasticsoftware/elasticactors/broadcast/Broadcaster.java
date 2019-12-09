@@ -15,6 +15,7 @@ import org.elasticsoftware.elasticactors.broadcast.messages.Add;
 import org.elasticsoftware.elasticactors.broadcast.messages.LeafNodesRequest;
 import org.elasticsoftware.elasticactors.broadcast.messages.LeafNodesResponse;
 import org.elasticsoftware.elasticactors.broadcast.messages.Remove;
+import org.elasticsoftware.elasticactors.broadcast.messages.Throttled;
 import org.elasticsoftware.elasticactors.broadcast.messages.ThrottledMessage;
 import org.elasticsoftware.elasticactors.broadcast.messages.UpdateThrottleConfig;
 import org.elasticsoftware.elasticactors.broadcast.state.BroadcasterState;
@@ -40,7 +41,7 @@ import static java.lang.String.format;
  * @author Joost van de Wijgerd
  */
 @Actor(stateClass = BroadcasterState.class, serializationFramework = JacksonSerializationFramework.class)
-@PersistenceConfig(persistOnMessages = false, included = {Add.class, Remove.class, UpdateThrottleConfig.class}, persistOn = {CREATE})
+@PersistenceConfig(persistOnMessages = false, included = {Add.class, Remove.class}, persistOn = {CREATE})
 @MessageHandlers(RehashHandlers.class)
 @Configurable
 public final class Broadcaster extends MethodActor {
@@ -139,8 +140,8 @@ public final class Broadcaster extends MethodActor {
     }
 
     @MessageHandler
-    public void handleUpdateThrottleConfig(UpdateThrottleConfig updateThrottleConfig, BroadcasterState state) {
-        state.setThrottleConfig(updateThrottleConfig.getThrottleConfig());
+    public void handleUpdateThrottleConfig(UpdateThrottleConfig updateThrottleConfig, ActorRef sender) {
+        logger.warn("Received an attempt to update the throttle config from actor [{}]. This should not happen!", sender);
     }
 
     @MessageHandler
@@ -195,16 +196,20 @@ public final class Broadcaster extends MethodActor {
 
     private void throttle(ThrottledBroadcastSession session, BroadcasterState state, ActorSystem actorSystem) {
         // first calculate the delay
-        int maxPerSecond = session.getThrottleConfig().getMaxMessagesPerSecond();
+        int maxPerSecond = session.getMessage().getThrottleConfig().getMaxMessagesPerSecond();
         int maxPerBatch = state.getBucketSize();
 
-        long delayInMillis = (1000 / maxPerSecond) * maxPerBatch;
+        long delayInMillis = (long) ((1000.0d / maxPerSecond) * maxPerBatch);
 
         try {
             // serialize the original message
             String messageData = serializationFramework.getObjectMapper().writeValueAsString(session.getMessage());
 
-            ThrottledMessage message = new ThrottledMessage(session.getSender(), session.getMessage().getClass().getName(), messageData);
+            ThrottledMessage message = new ThrottledMessage(
+                    session.getSender(),
+                    session.getMessage().getClass().getName(),
+                    messageData,
+                    session.getMessage().getThrottleConfig());
 
             // now schedule the delays
             long count = 0;
@@ -227,9 +232,11 @@ public final class Broadcaster extends MethodActor {
             }
         } else {
             // see if we have a throttle config set
-            if(state.getThrottleConfig() != null) {
+            if (message instanceof Throttled && ((Throttled) message).getThrottleConfig() != null) {
                 // create a new throttle session
-                ThrottledBroadcastSession throttledBroadcastSession = new ThrottledBroadcastSession(message, sender, state.getThrottleConfig());
+                ThrottledBroadcastSession throttledBroadcastSession = new ThrottledBroadcastSession(
+                        (Throttled) message,
+                        sender);
                 state.addThrottledBroadcastSession(throttledBroadcastSession);
                 // and send a request to the nodes
                 LeafNodesRequest request = new LeafNodesRequest(throttledBroadcastSession.getId());

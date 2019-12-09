@@ -2,6 +2,7 @@ package org.elasticsoftware.elasticactors.broadcast.state;
 
 import org.elasticsoftware.elasticactors.ActorRef;
 import org.elasticsoftware.elasticactors.broadcast.messages.LeafNodesResponse;
+import org.elasticsoftware.elasticactors.broadcast.messages.Throttled;
 
 import java.util.Set;
 import java.util.UUID;
@@ -14,25 +15,23 @@ import static com.google.common.collect.Sets.newHashSet;
 public final class ThrottledBroadcastSession {
     private final String id;
     private final ActorRef parent;
-    private final Object message;
+    private final Throttled message;
     private final ActorRef sender;
     private final Set<ActorRef> leafNodes = newHashSet();
-    private final ThrottleConfig throttleConfig;
     private int receivedResponses = 0;
 
-    public ThrottledBroadcastSession(Object message, ActorRef sender, ThrottleConfig throttleConfig) {
-        this(UUID.randomUUID().toString(), message, sender, throttleConfig);
+    public ThrottledBroadcastSession(Throttled message, ActorRef sender) {
+        this(UUID.randomUUID().toString(), message, sender);
     }
 
     public ThrottledBroadcastSession(ActorRef parent) {
         this(UUID.randomUUID().toString(), parent);
     }
 
-    public ThrottledBroadcastSession(String id, Object message, ActorRef sender, ThrottleConfig throttleConfig) {
+    public ThrottledBroadcastSession(String id, Throttled message, ActorRef sender) {
         this.id = id;
         this.message = message;
         this.sender = sender;
-        this.throttleConfig = throttleConfig;
         this.parent = null;
     }
 
@@ -41,7 +40,6 @@ public final class ThrottledBroadcastSession {
         this.parent = parent;
         this.message = null;
         this.sender = null;
-        this.throttleConfig = null;
     }
 
     public String getId() {
@@ -52,7 +50,7 @@ public final class ThrottledBroadcastSession {
         return parent;
     }
 
-    public Object getMessage() {
+    public Throttled getMessage() {
         return message;
     }
 
@@ -75,7 +73,4 @@ public final class ThrottledBroadcastSession {
         return (numberOfNodes == receivedResponses);
     }
 
-    public ThrottleConfig getThrottleConfig() {
-        return throttleConfig;
-    }
 }

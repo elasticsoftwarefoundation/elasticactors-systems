@@ -14,8 +14,9 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 /**
  * @author Joost van de Wijgerd
  */
-@Message(serializationFramework = JacksonSerializationFramework.class, durable = true, immutable = true)
+@Message(serializationFramework = JacksonSerializationFramework.class, immutable = true)
 @JsonInclude(NON_NULL)
+@Deprecated
 public final class UpdateThrottleConfig {
     private final ThrottleConfig throttleConfig;
 
