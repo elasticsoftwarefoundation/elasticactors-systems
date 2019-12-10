@@ -212,7 +212,7 @@ public class BroadcastActorSystemTest {
     public void testWithThrottleConfig() throws Exception {
         ActorSystem broadcastActorSystem = testActorSystem.getActorSystem();
 
-        ActorRef sessionList = broadcastActorSystem.actorOf("sessionList",Broadcaster.class,new BroadcasterState(8,32,new ThrottleConfig(500)));
+        ActorRef sessionList = broadcastActorSystem.actorOf("sessionList",Broadcaster.class,new BroadcasterState(8,32));
 
         // @todo: the default shard cache is set to 1024!
         int NUM_SESSIONS = 1000;
@@ -242,7 +242,7 @@ public class BroadcastActorSystemTest {
         sessionList.tell(new Add(sessions),replyActor);
 
         // now send a message
-        sessionList.tell(new Hello("How are you?"),replyActor);
+        sessionList.tell(new Hello("How are you?", new ThrottleConfig(500)),replyActor);
 
         // wait until we're done
 
