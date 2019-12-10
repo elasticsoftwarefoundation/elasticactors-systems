@@ -151,24 +151,24 @@ public final class Broadcaster extends MethodActor {
             // return ourselves
             logger.debug(
                     "Node[{}]: broadcast [{}] reached leaf, sending myself to the parent [{}]",
-                    self,
+                    self.getActorId(),
                     request.getBroadcastId(),
-                    parent);
+                    parent.getActorId());
             parent.tell(new LeafNodesResponse(request.getBroadcastId(), newHashSet(self)));
         } else {
             // start a session (so we know when to return the response to the parent node)
             logger.debug(
                     "Node [{}]: broadcast [{}] reached node, forwarding the request to children nodes",
-                    self,
+                    self.getActorId(),
                     request.getBroadcastId());
             state.addThrottledBroadcastSession(new ThrottledBroadcastSession(request.getBroadcastId(),parent));
             // forward the request to the other nodes
             for (ActorRef actorRef : state.getNodes()) {
                 logger.trace(
                         "Node [{}]: forwarding broadcast [{}] to children node [{}]",
-                        self,
+                        self.getActorId(),
                         request.getBroadcastId(),
-                        actorRef);
+                        actorRef.getActorId());
                 actorRef.tell(request, self);
             }
         }
@@ -178,6 +178,7 @@ public final class Broadcaster extends MethodActor {
     public void handleLeafNodesResponse(LeafNodesResponse response, BroadcasterState state, ActorSystem actorSystem, ActorRef child) {
         // the throttling session
         ThrottledBroadcastSession session = state.getThrottledBroadcastSession(response.getBroadcastId());
+        ActorRef self = getSelf();
         if(session != null) {
             session.handleLeafNodesResponse(response);
             if(session.isReady(state.getNodes().size())) {
@@ -185,38 +186,39 @@ public final class Broadcaster extends MethodActor {
                 if(session.getParent() != null) {
                     logger.debug(
                             "Node [{}]: sending response of session [{}] to the parent [{}] with {} leaf nodes",
-                            getSelf(),
+                            self.getActorId(),
                             session.getId(),
-                            session.getParent(),
+                            session.getParent().getActorId(),
                             session.getLeafNodes().size());
                     session.getParent().tell(new LeafNodesResponse(session.getId(),session.getLeafNodes()));
                 } else {
                     // this is the actual throttling action
                     logger.debug(
                             "Node [{}]: got throttling action for session [{}]",
-                            getSelf(),
+                            self.getActorId(),
                             session.getId());
                     throttle(session, state, actorSystem);
                 }
                 // and clear the session
                 logger.debug(
-                        "Node [{}]: Removing the broadcast session [{}]",
-                        getSelf(),
+                        "Node [{}]: removing the broadcast session [{}]",
+                        self.getActorId(),
                         session.getId());
                 state.removeThrottledBroadcastSession(session.getId());
             } else {
                 logger.debug(
                         "Node [{}]: session [{}] is not ready yet. Number of nodes = {}, received = {}",
-                        getSelf(),
+                        self.getActorId(),
                         session.getId(),
                         state.getNodes().size(),
                         session.getReceivedResponses());
             }
         } else {
             logger.warn(
-                    "Node [{}]: got response from child node [{}], but couldn't find a corresponding session",
-                    getSelf(),
-                    child);
+                    "Node [{}]: got response from child node [{}], but couldn't find session [{}]",
+                    self.getActorId(),
+                    child,
+                    response.getBroadcastId());
         }
     }
 
@@ -225,7 +227,7 @@ public final class Broadcaster extends MethodActor {
         try {
             logger.debug(
                     "Node [{}]: handling ThrottledMessage of class [{}] received from [{}]",
-                    getSelf(),
+                    getSelf().getActorId(),
                     message.getMessageClass(),
                     message.getSender());
 
@@ -260,15 +262,16 @@ public final class Broadcaster extends MethodActor {
 
             // now schedule the delays
             long count = 0;
+            ActorRef self = getSelf();
             for (ActorRef leafNode : session.getLeafNodes()) {
                 long messageDelay = count * delayInMillis;
                 logger.trace(
                         "Node [{}]: scheduling throttled message of type [{}] to leaf node [{}] in {} ms",
-                        getSelf(),
+                        self.getActorId(),
                         session.getMessage().getClass().getName(),
-                        leafNode,
+                        leafNode.getActorId(),
                         messageDelay);
-                actorSystem.getScheduler().scheduleOnce(getSelf(), message, leafNode, messageDelay, TimeUnit.MILLISECONDS);
+                actorSystem.getScheduler().scheduleOnce(self, message, leafNode, messageDelay, TimeUnit.MILLISECONDS);
                 count += 1;
             }
         } catch(Exception e) {
@@ -284,11 +287,11 @@ public final class Broadcaster extends MethodActor {
         if(state.isLeafNode()) {
             logger.debug(
                     "Node [{}]: leaf got message of type [{}]",
-                    self,
+                    self.getActorId(),
                     message.getClass().getName());
             for (ActorRef actorRef : state.getLeaves()) {
                 logger.trace("Node [{}]: sending message of type [{}] to [{}]",
-                        self,
+                        self.getActorId(),
                         message.getClass().getName(),
                         actorRef);
                 actorRef.tell(message,sender);
@@ -302,30 +305,31 @@ public final class Broadcaster extends MethodActor {
                         sender);
                 state.addThrottledBroadcastSession(throttledBroadcastSession);
                 logger.debug(
-                        "Node [{}]: initiating throttled session [{}] with {} messages/sec for message of type [{}]",
-                        self,
+                        "Node [{}]: initiating throttled broadcast [{}] with {} messages/sec for message of type [{}]",
+                        self.getActorId(),
                         throttledBroadcastSession.getId(),
                         ((Throttled) message).getThrottleConfig().getMaxMessagesPerSecond(),
                         message.getClass().getName());
                 // and send a request to the nodes
                 LeafNodesRequest request = new LeafNodesRequest(throttledBroadcastSession.getId());
                 for (ActorRef actorRef : state.getNodes()) {
-                    logger.trace("Node [{}]: sending leaf node request to [{}]",
-                            self,
-                            actorRef);
+                    logger.trace("Node [{}]: sending leaf node request for broadcast [{}] to [{}]",
+                            self.getActorId(),
+                            request.getBroadcastId(),
+                            actorRef.getActorId());
                     actorRef.tell(request, getSelf());
                 }
             } else {
                 // just broadcast
                 logger.debug(
                         "Node [{}]: broadcasting message of type [{}]",
-                        self,
+                        self.getActorId(),
                         message.getClass().getName());
                 for (ActorRef actorRef : state.getNodes()) {
                     logger.trace("Node [{}]: sending message of type [{}] to [{}]",
-                            self,
+                            self.getActorId(),
                             message.getClass().getName(),
-                            actorRef);
+                            actorRef.getActorId());
                     actorRef.tell(message, sender);
                 }
             }
