@@ -257,8 +257,7 @@ public final class Broadcaster extends MethodActor {
             ThrottledMessage message = new ThrottledMessage(
                     session.getSender(),
                     session.getMessage().getClass().getName(),
-                    messageData,
-                    session.getMessage().getThrottleConfig());
+                    messageData);
 
             // now schedule the delays
             long count = 0;

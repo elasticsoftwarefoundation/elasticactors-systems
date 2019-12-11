@@ -12,6 +12,10 @@ import javax.annotation.Nullable;
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
 /**
+ * DEPRECATED: starting from version 2.1.0, this message has been deprecated. Using it will not
+ * change the throttling configuration of the Broadcaster actor anymore. This has been superseded
+ * by the per-message configuration provided by {@link Throttled}.
+ *
  * @author Joost van de Wijgerd
  */
 @Message(serializationFramework = JacksonSerializationFramework.class, immutable = true)
