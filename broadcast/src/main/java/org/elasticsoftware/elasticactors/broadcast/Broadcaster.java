@@ -41,7 +41,7 @@ import static java.lang.String.format;
  * @author Joost van de Wijgerd
  */
 @Actor(stateClass = BroadcasterState.class, serializationFramework = JacksonSerializationFramework.class)
-@PersistenceConfig(persistOnMessages = false, included = {Add.class, Remove.class}, persistOn = {CREATE})
+@PersistenceConfig(persistOnMessages = false, included = {Add.class, Remove.class, UpdateThrottleConfig.class}, persistOn = {CREATE})
 @MessageHandlers(RehashHandlers.class)
 @Configurable
 public final class Broadcaster extends MethodActor {
