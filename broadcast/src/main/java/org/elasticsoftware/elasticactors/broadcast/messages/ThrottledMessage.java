@@ -16,9 +16,10 @@ public final class ThrottledMessage {
     private final String messageData;
 
     @JsonCreator
-    public ThrottledMessage(@JsonProperty("sender") ActorRef sender,
-                            @JsonProperty("messageClass") String messageClass,
-                            @JsonProperty("messageData") String messageData) {
+    public ThrottledMessage(
+            @JsonProperty("sender") ActorRef sender,
+            @JsonProperty("messageClass") String messageClass,
+            @JsonProperty("messageData") String messageData) {
         this.sender = sender;
         this.messageClass = messageClass;
         this.messageData = messageData;
@@ -35,4 +36,5 @@ public final class ThrottledMessage {
     public String getMessageData() {
         return messageData;
     }
+
 }

@@ -1,14 +1,23 @@
 package org.elasticsoftware.elasticactors.broadcast.state;
 
-import com.fasterxml.jackson.annotation.*;
-import com.google.common.collect.Sets;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.elasticsoftware.elasticactors.ActorRef;
 import org.elasticsoftware.elasticactors.base.state.JacksonActorState;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
-import static com.google.common.collect.Maps.newHashMap;
 
 /**
  * @author Joost van de Wijgerd
@@ -16,14 +25,14 @@ import static com.google.common.collect.Maps.newHashMap;
 @JsonInclude(NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public final class BroadcasterState extends JacksonActorState<BroadcasterState> {
+
     private final int bucketsPerNode;
     private final int bucketSize;
     private final List<ActorRef> nodes;
     private final Set<ActorRef> leaves;
     private boolean leafNode = true;
-    private ThrottleConfig throttleConfig;
-    private final transient Map<String,ThrottledBroadcastSession> throttledBroadcasts = newHashMap();
-    private int size = 0;
+    private final transient Map<String, ThrottledBroadcastSession> throttledBroadcasts = new HashMap<>();
+    private int size;
 
     // variables necessary for re-hashing process
     private transient Boolean currentlyRehashing = false;
@@ -34,38 +43,36 @@ public final class BroadcasterState extends JacksonActorState<BroadcasterState> 
     private transient Integer receivedRehashingReplies = 0;
     private transient List<Object> receivedDuringRehashing = new ArrayList<>();
 
-    public BroadcasterState(int bucketsPerNode, int bucketSize) {
-        this.bucketsPerNode = bucketsPerNode;
-        this.bucketSize = bucketSize;
-        this.leaves = Sets.newHashSet();
-        this.nodes = new LinkedList<>();
-        this.throttleConfig = null;
-    }
+    /**
+     * DEPRECATED: starting from version 2.1.0, the state's {@code throttleConfig} field has no
+     * function anymore and is provided solely for backwards compatibility reasons. See
+     * {@link org.elasticsoftware.elasticactors.broadcast.messages.UpdateThrottleConfig}.
+     */
+    @Deprecated
+    private ThrottleConfig throttleConfig;
 
-    public BroadcasterState(int bucketsPerNode, int bucketSize, ThrottleConfig throttleConfig) {
-        this.bucketsPerNode = bucketsPerNode;
-        this.bucketSize = bucketSize;
-        this.leaves = Sets.newHashSet();
-        this.nodes = new LinkedList<>();
-        this.throttleConfig = throttleConfig;
+    public BroadcasterState(int bucketsPerNode, int bucketSize) {
+        this(bucketsPerNode, bucketSize, new LinkedList<>(), new HashSet<>(), 0, null);
     }
 
     public BroadcasterState(int bucketsPerNode, int bucketSize, Collection<ActorRef> leaves) {
-        this.bucketsPerNode = bucketsPerNode;
-        this.bucketSize = bucketSize;
-        this.leaves = Sets.newHashSet(leaves);
-        this.nodes = new LinkedList<>();
-        this.size = this.leaves.size();
-        this.throttleConfig = null;
+        this(
+                bucketsPerNode,
+                bucketSize,
+                new LinkedList<>(),
+                new HashSet<>(leaves),
+                leaves.size(),
+                null);
     }
 
     @JsonCreator
-    public BroadcasterState(@JsonProperty("bucketsPerNode") int bucketsPerNode,
-                            @JsonProperty("bucketSize") int bucketSize,
-                            @JsonProperty("nodes") List<ActorRef> nodes,
-                            @JsonProperty("leaves") Set<ActorRef> leaves,
-                            @JsonProperty("size") int size,
-                            @JsonProperty("throttleConfig") ThrottleConfig throttleConfig) {
+    public BroadcasterState(
+            @JsonProperty("bucketsPerNode") int bucketsPerNode,
+            @JsonProperty("bucketSize") int bucketSize,
+            @JsonProperty("nodes") List<ActorRef> nodes,
+            @JsonProperty("leaves") Set<ActorRef> leaves,
+            @JsonProperty("size") int size,
+            @Deprecated @JsonProperty("throttleConfig") ThrottleConfig throttleConfig) {
         this.bucketsPerNode = bucketsPerNode;
         this.bucketSize = bucketSize;
         this.nodes = nodes;
@@ -107,10 +114,22 @@ public final class BroadcasterState extends JacksonActorState<BroadcasterState> 
         return leafNode ? leaves.size() : size;
     }
 
+    /**
+     * DEPRECATED: starting from version 2.1.0, the state's {@code throttleConfig} field has no
+     * function anymore and is provided solely for backwards compatibility reasons. See
+     * {@link org.elasticsoftware.elasticactors.broadcast.messages.UpdateThrottleConfig}.
+     */
+    @Deprecated
     public ThrottleConfig getThrottleConfig() {
         return throttleConfig;
     }
 
+    /**
+     * DEPRECATED: starting from version 2.1.0, the state's {@code throttleConfig} field has no
+     * function anymore and is provided solely for backwards compatibility reasons. See
+     * {@link org.elasticsoftware.elasticactors.broadcast.messages.UpdateThrottleConfig}.
+     */
+    @Deprecated
     public void setThrottleConfig(ThrottleConfig throttleConfig) {
         this.throttleConfig = throttleConfig;
     }

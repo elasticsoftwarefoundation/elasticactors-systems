@@ -15,6 +15,7 @@ import org.elasticsoftware.elasticactors.broadcast.messages.Add;
 import org.elasticsoftware.elasticactors.broadcast.messages.LeafNodesRequest;
 import org.elasticsoftware.elasticactors.broadcast.messages.LeafNodesResponse;
 import org.elasticsoftware.elasticactors.broadcast.messages.Remove;
+import org.elasticsoftware.elasticactors.broadcast.messages.Throttled;
 import org.elasticsoftware.elasticactors.broadcast.messages.ThrottledMessage;
 import org.elasticsoftware.elasticactors.broadcast.messages.UpdateThrottleConfig;
 import org.elasticsoftware.elasticactors.broadcast.state.BroadcasterState;
@@ -40,7 +41,7 @@ import static java.lang.String.format;
  * @author Joost van de Wijgerd
  */
 @Actor(stateClass = BroadcasterState.class, serializationFramework = JacksonSerializationFramework.class)
-@PersistenceConfig(persistOnMessages = false, included = {Add.class, Remove.class, UpdateThrottleConfig.class}, persistOn = {CREATE})
+@PersistenceConfig(persistOnMessages = false, included = {Add.class, Remove.class}, persistOn = {CREATE})
 @MessageHandlers(RehashHandlers.class)
 @Configurable
 public final class Broadcaster extends MethodActor {
@@ -83,10 +84,10 @@ public final class Broadcaster extends MethodActor {
     public void handleRemove(Remove remove,BroadcasterState state) {
         if (state.getCurrentlyRehashing()) {
             if (state.getRehashRoot()) {
-                logger.info("Received remove request, but broadcaster <{}> is currently rehashing. Saving message for when rehashing will be done", getSelf().getActorId());
+                logger.info("Received remove request, but broadcaster [{}] is currently rehashing. Saving message for when rehashing will be done", getSelf().getActorId());
                 state.getReceivedDuringRehashing().add(remove);
             } else {
-                logger.error("Received remove request, but broadcaster <{}> is currently rehashing and is not the root!. This should not happen, ignoring remove request.", getSelf().getActorId());
+                logger.error("Received remove request, but broadcaster [{}] is currently rehashing and is not the root!. This should not happen, ignoring remove request.", getSelf().getActorId());
             }
 
             return;
@@ -110,10 +111,10 @@ public final class Broadcaster extends MethodActor {
     public void handleAdd(Add add,BroadcasterState state) throws Exception {
         if (state.getCurrentlyRehashing()) {
             if (state.getRehashRoot()) {
-                logger.info("Received add request, but broadcaster <{}> is currently rehashing. Saving message for when rehashing will be done", getSelf().getActorId());
+                logger.info("Received add request, but broadcaster [{}] is currently rehashing. Saving message for when rehashing will be done", getSelf().getActorId());
                 state.getReceivedDuringRehashing().add(add);
             } else {
-                logger.error("Received add request, but broadcaster <{}> is currently rehashing and is not the root!. This should not happen, ignoring add request.", getSelf().getActorId());
+                logger.error("Received add request, but broadcaster [{}] is currently rehashing and is not the root!. This should not happen, ignoring add request.", getSelf().getActorId());
             }
 
             return;
@@ -139,21 +140,41 @@ public final class Broadcaster extends MethodActor {
     }
 
     @MessageHandler
-    public void handleUpdateThrottleConfig(UpdateThrottleConfig updateThrottleConfig, BroadcasterState state) {
+    public void handleUpdateThrottleConfig(
+            UpdateThrottleConfig updateThrottleConfig,
+            BroadcasterState state,
+            ActorRef sender) {
+        logger.warn("Received an attempt to update the throttle config from actor [{}]. "
+                + "This has been deprecated and should not be used anymore.", sender);
         state.setThrottleConfig(updateThrottleConfig.getThrottleConfig());
     }
 
     @MessageHandler
     public void handleLeafNodesRequest(LeafNodesRequest request,BroadcasterState state, ActorRef parent) {
+        ActorRef self = getSelf();
         if(state.isLeafNode()) {
             // return ourselves
-            parent.tell(new LeafNodesResponse(request.getBroadcastId(), newHashSet(getSelf())));
+            logger.debug(
+                    "Node[{}]: broadcast [{}] reached leaf, sending myself to the parent [{}]",
+                    self.getActorId(),
+                    request.getBroadcastId(),
+                    parent.getActorId());
+            parent.tell(new LeafNodesResponse(request.getBroadcastId(), newHashSet(self)));
         } else {
             // start a session (so we know when to return the response to the parent node)
+            logger.debug(
+                    "Node [{}]: broadcast [{}] reached node, forwarding the request to children nodes",
+                    self.getActorId(),
+                    request.getBroadcastId());
             state.addThrottledBroadcastSession(new ThrottledBroadcastSession(request.getBroadcastId(),parent));
             // forward the request to the other nodes
             for (ActorRef actorRef : state.getNodes()) {
-                actorRef.tell(request,getSelf());
+                logger.trace(
+                        "Node [{}]: forwarding broadcast [{}] to children node [{}]",
+                        self.getActorId(),
+                        request.getBroadcastId(),
+                        actorRef.getActorId());
+                actorRef.tell(request, self);
             }
         }
     }
@@ -162,27 +183,61 @@ public final class Broadcaster extends MethodActor {
     public void handleLeafNodesResponse(LeafNodesResponse response, BroadcasterState state, ActorSystem actorSystem, ActorRef child) {
         // the throttling session
         ThrottledBroadcastSession session = state.getThrottledBroadcastSession(response.getBroadcastId());
+        ActorRef self = getSelf();
         if(session != null) {
             session.handleLeafNodesResponse(response);
             if(session.isReady(state.getNodes().size())) {
                 // if the parent is set, create a new response and send it up the chain
                 if(session.getParent() != null) {
+                    logger.debug(
+                            "Node [{}]: sending response of session [{}] to the parent [{}] with {} leaf nodes",
+                            self.getActorId(),
+                            session.getId(),
+                            session.getParent().getActorId(),
+                            session.getLeafNodes().size());
                     session.getParent().tell(new LeafNodesResponse(session.getId(),session.getLeafNodes()));
                 } else {
                     // this is the actual throttling action
+                    logger.debug(
+                            "Node [{}]: got throttling action for session [{}]",
+                            self.getActorId(),
+                            session.getId());
                     throttle(session, state, actorSystem);
                 }
                 // and clear the session
+                logger.debug(
+                        "Node [{}]: removing the broadcast session [{}]",
+                        self.getActorId(),
+                        session.getId());
                 state.removeThrottledBroadcastSession(session.getId());
+            } else {
+                logger.debug(
+                        "Node [{}]: session [{}] is not ready yet. Number of nodes = {}, received = {}",
+                        self.getActorId(),
+                        session.getId(),
+                        state.getNodes().size(),
+                        session.getReceivedResponses());
             }
+        } else {
+            logger.warn(
+                    "Node [{}]: got response from child node [{}], but couldn't find session [{}]",
+                    self.getActorId(),
+                    child,
+                    response.getBroadcastId());
         }
     }
 
     @MessageHandler
     public void handleThrottledMessage(ThrottledMessage message) {
         try {
+            logger.debug(
+                    "Node [{}]: handling ThrottledMessage of class [{}] received from [{}]",
+                    getSelf().getActorId(),
+                    message.getMessageClass(),
+                    message.getSender());
+
             // build up the original message
-            Class messageClass = Class.forName(message.getMessageClass());
+            Class<?> messageClass = Class.forName(message.getMessageClass());
 
             Object originalMessage = serializationFramework.getObjectMapper().readValue(message.getMessageData(), messageClass);
 
@@ -195,21 +250,32 @@ public final class Broadcaster extends MethodActor {
 
     private void throttle(ThrottledBroadcastSession session, BroadcasterState state, ActorSystem actorSystem) {
         // first calculate the delay
-        int maxPerSecond = session.getThrottleConfig().getMaxMessagesPerSecond();
+        int maxPerSecond = session.getMessage().getThrottleConfig().getMaxMessagesPerSecond();
         int maxPerBatch = state.getBucketSize();
 
-        long delayInMillis = (1000 / maxPerSecond) * maxPerBatch;
+        long delayInMillis = (long) ((1000.0d / maxPerSecond) * maxPerBatch);
 
         try {
             // serialize the original message
             String messageData = serializationFramework.getObjectMapper().writeValueAsString(session.getMessage());
 
-            ThrottledMessage message = new ThrottledMessage(session.getSender(), session.getMessage().getClass().getName(), messageData);
+            ThrottledMessage message = new ThrottledMessage(
+                    session.getSender(),
+                    session.getMessage().getClass().getName(),
+                    messageData);
 
             // now schedule the delays
             long count = 0;
+            ActorRef self = getSelf();
             for (ActorRef leafNode : session.getLeafNodes()) {
-                actorSystem.getScheduler().scheduleOnce(getSelf(), message, leafNode, (count * delayInMillis), TimeUnit.MILLISECONDS);
+                long messageDelay = count * delayInMillis;
+                logger.trace(
+                        "Node [{}]: scheduling throttled message of type [{}] to leaf node [{}] in {} ms",
+                        self.getActorId(),
+                        session.getMessage().getClass().getName(),
+                        leafNode.getActorId(),
+                        messageDelay);
+                actorSystem.getScheduler().scheduleOnce(self, message, leafNode, messageDelay, TimeUnit.MILLISECONDS);
                 count += 1;
             }
         } catch(Exception e) {
@@ -221,24 +287,53 @@ public final class Broadcaster extends MethodActor {
     protected void onUnhandled(ActorRef sender, Object message) {
         BroadcasterState state = getState(BroadcasterState.class);
         // pass the message on
+        ActorRef self = getSelf();
         if(state.isLeafNode()) {
+            logger.debug(
+                    "Node [{}]: leaf got message of type [{}]",
+                    self.getActorId(),
+                    message.getClass().getName());
             for (ActorRef actorRef : state.getLeaves()) {
+                logger.trace("Node [{}]: sending message of type [{}] to [{}]",
+                        self.getActorId(),
+                        message.getClass().getName(),
+                        actorRef);
                 actorRef.tell(message,sender);
             }
         } else {
             // see if we have a throttle config set
-            if(state.getThrottleConfig() != null) {
+            if (message instanceof Throttled && ((Throttled) message).getThrottleConfig() != null) {
                 // create a new throttle session
-                ThrottledBroadcastSession throttledBroadcastSession = new ThrottledBroadcastSession(message, sender, state.getThrottleConfig());
+                ThrottledBroadcastSession throttledBroadcastSession = new ThrottledBroadcastSession(
+                        (Throttled) message,
+                        sender);
                 state.addThrottledBroadcastSession(throttledBroadcastSession);
+                logger.debug(
+                        "Node [{}]: initiating throttled broadcast [{}] with {} messages/sec for message of type [{}]",
+                        self.getActorId(),
+                        throttledBroadcastSession.getId(),
+                        ((Throttled) message).getThrottleConfig().getMaxMessagesPerSecond(),
+                        message.getClass().getName());
                 // and send a request to the nodes
                 LeafNodesRequest request = new LeafNodesRequest(throttledBroadcastSession.getId());
                 for (ActorRef actorRef : state.getNodes()) {
+                    logger.trace("Node [{}]: sending leaf node request for broadcast [{}] to [{}]",
+                            self.getActorId(),
+                            request.getBroadcastId(),
+                            actorRef.getActorId());
                     actorRef.tell(request, getSelf());
                 }
             } else {
                 // just broadcast
+                logger.debug(
+                        "Node [{}]: broadcasting message of type [{}]",
+                        self.getActorId(),
+                        message.getClass().getName());
                 for (ActorRef actorRef : state.getNodes()) {
+                    logger.trace("Node [{}]: sending message of type [{}] to [{}]",
+                            self.getActorId(),
+                            message.getClass().getName(),
+                            actorRef.getActorId());
                     actorRef.tell(message, sender);
                 }
             }
