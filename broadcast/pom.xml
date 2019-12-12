@@ -34,6 +34,11 @@
             <artifactId>aspectjrt</artifactId>
             <version>${aspectj.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.elasticsoftware.elasticactors-systems</groupId>
+            <artifactId>elasticactors-broadcast-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
     <build>
