@@ -140,8 +140,13 @@ public final class Broadcaster extends MethodActor {
     }
 
     @MessageHandler
-    public void handleUpdateThrottleConfig(UpdateThrottleConfig updateThrottleConfig, ActorRef sender) {
-        logger.warn("Received an attempt to update the throttle config from actor [{}]. This should not happen!", sender);
+    public void handleUpdateThrottleConfig(
+            UpdateThrottleConfig updateThrottleConfig,
+            BroadcasterState state,
+            ActorRef sender) {
+        logger.warn("Received an attempt to update the throttle config from actor [{}]. "
+                + "This hass been deprecated and should not be used anymore.", sender);
+        state.setThrottleConfig(updateThrottleConfig.getThrottleConfig());
     }
 
     @MessageHandler
