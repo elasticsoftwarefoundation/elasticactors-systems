@@ -139,6 +139,7 @@
         <module>geoevents</module>
         <module>broadcast</module>
         <module>master-service</module>
+        <module>broadcast-api</module>
     </modules>
 
     <build>
