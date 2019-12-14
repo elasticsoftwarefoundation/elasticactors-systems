@@ -5,17 +5,14 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.elasticsoftware.elasticactors.base.serialization.JacksonSerializationFramework;
 import org.elasticsoftware.elasticactors.serialization.Message;
 
-/**
- * @author Joost van de Wijgerd
- */
 @Message(serializationFramework = JacksonSerializationFramework.class, durable = false)
-@Throttled(maxPerSecond = "500")
-public final class Hello {
+@Throttled(maxPerSecond = "${ea.broadcast.test.maxPerSecond}")
+public final class HelloProperty {
 
     private final String message;
 
     @JsonCreator
-    public Hello(@JsonProperty("message") String message) {
+    public HelloProperty(@JsonProperty("message") String message) {
         this.message = message;
     }
 
