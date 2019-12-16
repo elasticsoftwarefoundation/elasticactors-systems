@@ -6,7 +6,9 @@ import org.elasticsoftware.elasticactors.base.actors.ActorDelegate;
 import org.elasticsoftware.elasticactors.base.actors.ReplyActor;
 import org.elasticsoftware.elasticactors.broadcast.messages.Add;
 import org.elasticsoftware.elasticactors.broadcast.messages.Hello;
-import org.elasticsoftware.elasticactors.broadcast.messages.HelloProperty;
+import org.elasticsoftware.elasticactors.broadcast.messages.HelloThrottled;
+import org.elasticsoftware.elasticactors.broadcast.messages.HelloThrottledMissingProperty;
+import org.elasticsoftware.elasticactors.broadcast.messages.HelloThrottledProperty;
 import org.elasticsoftware.elasticactors.broadcast.messages.UpdateThrottleConfig;
 import org.elasticsoftware.elasticactors.broadcast.messages.rehash.RehashComplete;
 import org.elasticsoftware.elasticactors.broadcast.messages.rehash.RehashRequest;
@@ -86,7 +88,7 @@ public class BroadcastActorSystemTest {
         sessionList.tell(new Hello("How are you?"),replyActor);
 
         // wait until we're done
-        assertTrue(waitLatch.await(30, TimeUnit.SECONDS));
+        assertTrue(waitLatch.await(10, TimeUnit.SECONDS));
     }
 
     @Test(enabled = true)
@@ -129,7 +131,7 @@ public class BroadcastActorSystemTest {
         sessionList.tell(new Hello("How are you?"),replyActor);
 
         // wait for a while for all messages to be processed
-        assertTrue(waitLatch.await(30, TimeUnit.SECONDS));
+        assertTrue(waitLatch.await(10, TimeUnit.SECONDS));
 
         // give the system a chance to process any extra messages
         // no guarantees here, this test might succeed on a very slow machine
@@ -192,13 +194,13 @@ public class BroadcastActorSystemTest {
 
         // send the rehash command & wait for completion
         sessionList.tell(new RehashRequest(), rehashingReplyActor);
-        assertTrue(rehashLatch.await(30, TimeUnit.SECONDS));
+        assertTrue(rehashLatch.await(10, TimeUnit.SECONDS));
 
         // now send a message
         sessionList.tell(new Hello("How are you?"),replyActor);
 
         // wait for a while for all messages to be processed
-        assertTrue(waitLatch.await(30, TimeUnit.SECONDS));
+        assertTrue(waitLatch.await(10, TimeUnit.SECONDS));
 
         // give the system a chance to process any extra messages
         // no guarantees here, this test might succeed on a very slow machine
@@ -215,7 +217,7 @@ public class BroadcastActorSystemTest {
 
         BroadcasterState initialState = new BroadcasterState(8, 32);
         initialState.setThrottleConfig(new ThrottleConfig(1));
-        ActorRef sessionList = broadcastActorSystem.actorOf("sessionList", Broadcaster.class, initialState);
+        ActorRef sessionList = broadcastActorSystem.actorOf("sessionThrottleConfigList", Broadcaster.class, initialState);
 
         // @todo: the default shard cache is set to 1024!
         int NUM_SESSIONS = 1000;
@@ -229,17 +231,12 @@ public class BroadcastActorSystemTest {
         final CountDownLatch waitLatch = new CountDownLatch(NUM_SESSIONS);
 
         // reply actor
-        ActorRef replyActor = broadcastActorSystem.tempActorOf(ReplyActor.class, new ActorDelegate<Hello>(false) {
-            @Override
-            public ActorDelegate<Hello> getBody() {
-                return this;
-            }
-
-            @Override
-            public void onReceive(ActorRef sender, Hello message) throws Exception {
-                waitLatch.countDown();
-            }
-        });
+        ActorRef replyActor = broadcastActorSystem.tempActorOf(
+                ReplyActor.class,
+                ActorDelegate.builder()
+                        .deleteAfterReceive(false)
+                        .onReceive(Hello.class, waitLatch::countDown)
+                        .build());
 
         // add them to the session list
         sessionList.tell(new Add(sessions),replyActor);
@@ -249,16 +246,15 @@ public class BroadcastActorSystemTest {
 
         // wait until we're done
 
-        assertTrue(waitLatch.await(30, TimeUnit.SECONDS));
+        assertTrue(waitLatch.await(10, TimeUnit.SECONDS));
     }
 
     @Test(enabled = true)
-    public void testWithThrottleConfig_property() throws Exception {
+    public void testThrottled() throws Exception {
         ActorSystem broadcastActorSystem = testActorSystem.getActorSystem();
 
         BroadcasterState initialState = new BroadcasterState(8, 32);
-        initialState.setThrottleConfig(new ThrottleConfig(1));
-        ActorRef sessionList = broadcastActorSystem.actorOf("sessionList", Broadcaster.class, initialState);
+        ActorRef sessionList = broadcastActorSystem.actorOf("sessionThrottledList", Broadcaster.class, initialState);
 
         // @todo: the default shard cache is set to 1024!
         int NUM_SESSIONS = 1000;
@@ -266,33 +262,102 @@ public class BroadcastActorSystemTest {
         List<ActorRef> sessions = new LinkedList<>();
         // create a lot of session actors
         for (int i = 0; i < NUM_SESSIONS; i++) {
-            sessions.add(broadcastActorSystem.actorOf(format("session-%d", i + 1), SessionPropertyActor.class));
+            sessions.add(broadcastActorSystem.actorOf(format("session-%d", i + 1), SessionThrottledActor.class));
         }
 
         final CountDownLatch waitLatch = new CountDownLatch(NUM_SESSIONS);
 
         // reply actor
-        ActorRef replyActor = broadcastActorSystem.tempActorOf(ReplyActor.class, new ActorDelegate<HelloProperty>(false) {
-            @Override
-            public ActorDelegate<HelloProperty> getBody() {
-                return this;
-            }
-
-            @Override
-            public void onReceive(ActorRef sender, HelloProperty message) throws Exception {
-                waitLatch.countDown();
-            }
-        });
+        ActorRef replyActor = broadcastActorSystem.tempActorOf(
+                ReplyActor.class,
+                ActorDelegate.builder()
+                        .deleteAfterReceive(false)
+                        .onReceive(HelloThrottled.class, waitLatch::countDown)
+                        .build());
 
         // add them to the session list
-        sessionList.tell(new Add(sessions),replyActor);
+        sessionList.tell(new Add(sessions), replyActor);
 
         // now send a message
-        sessionList.tell(new HelloProperty("How are you?"),replyActor);
+        sessionList.tell(new HelloThrottled("How are you?"), replyActor);
 
         // wait until we're done
 
-        assertTrue(waitLatch.await(30, TimeUnit.SECONDS));
+        assertTrue(waitLatch.await(10, TimeUnit.SECONDS));
+    }
+
+    @Test(enabled = true)
+    public void testThrottled_property() throws Exception {
+        ActorSystem broadcastActorSystem = testActorSystem.getActorSystem();
+
+        BroadcasterState initialState = new BroadcasterState(8, 32);
+        ActorRef sessionList = broadcastActorSystem.actorOf("sessionThrottledPropertyList", Broadcaster.class, initialState);
+
+        // @todo: the default shard cache is set to 1024!
+        int NUM_SESSIONS = 1000;
+
+        List<ActorRef> sessions = new LinkedList<>();
+        // create a lot of session actors
+        for (int i = 0; i < NUM_SESSIONS; i++) {
+            sessions.add(broadcastActorSystem.actorOf(format("session-%d", i + 1), SessionThrottledPropertyActor.class));
+        }
+
+        final CountDownLatch waitLatch = new CountDownLatch(NUM_SESSIONS);
+
+        // reply actor
+        ActorRef replyActor = broadcastActorSystem.tempActorOf(
+                ReplyActor.class,
+                ActorDelegate.builder()
+                        .deleteAfterReceive(false)
+                        .onReceive(HelloThrottledProperty.class, waitLatch::countDown)
+                        .build());
+
+        // add them to the session list
+        sessionList.tell(new Add(sessions), replyActor);
+
+        // now send a message
+        sessionList.tell(new HelloThrottledProperty("How are you?"), replyActor);
+
+        // wait until we're done
+
+        assertTrue(waitLatch.await(10, TimeUnit.SECONDS));
+    }
+
+    @Test(enabled = true)
+    public void testThrottled_missing_property() throws Exception {
+        ActorSystem broadcastActorSystem = testActorSystem.getActorSystem();
+
+        BroadcasterState initialState = new BroadcasterState(8, 32);
+        ActorRef sessionList = broadcastActorSystem.actorOf("sessionThrottledMissingPropertyList", Broadcaster.class, initialState);
+
+        // @todo: the default shard cache is set to 1024!
+        int NUM_SESSIONS = 1000;
+
+        List<ActorRef> sessions = new LinkedList<>();
+        // create a lot of session actors
+        for (int i = 0; i < NUM_SESSIONS; i++) {
+            sessions.add(broadcastActorSystem.actorOf(format("session-%d", i + 1), SessionThrottledMissingPropertyActor.class));
+        }
+
+        final CountDownLatch waitLatch = new CountDownLatch(NUM_SESSIONS);
+
+        // reply actor
+        ActorRef replyActor = broadcastActorSystem.tempActorOf(
+                ReplyActor.class,
+                ActorDelegate.builder()
+                        .deleteAfterReceive(false)
+                        .onReceive(HelloThrottledMissingProperty.class, waitLatch::countDown)
+                        .build());
+
+        // add them to the session list
+        sessionList.tell(new Add(sessions), replyActor);
+
+        // now send a message
+        sessionList.tell(new HelloThrottledMissingProperty("How are you?"), replyActor);
+
+        // wait until we're done
+
+        assertTrue(waitLatch.await(10, TimeUnit.SECONDS));
     }
 
     @Test(enabled = true)
@@ -333,7 +398,7 @@ public class BroadcastActorSystemTest {
 
         // wait until we're done
 
-        assertTrue(waitLatch1.await(30, TimeUnit.SECONDS));
+        assertTrue(waitLatch1.await(10, TimeUnit.SECONDS));
 
         // now set the throttle config
         sessionList.tell(new UpdateThrottleConfig(new ThrottleConfig(250)), null);
@@ -361,6 +426,6 @@ public class BroadcastActorSystemTest {
 
         // wait until we're done
 
-        assertTrue(waitLatch2.await(30, TimeUnit.SECONDS));
+        assertTrue(waitLatch2.await(10, TimeUnit.SECONDS));
     }
 }

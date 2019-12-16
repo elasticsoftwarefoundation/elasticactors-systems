@@ -6,13 +6,13 @@ import org.elasticsoftware.elasticactors.base.serialization.JacksonSerialization
 import org.elasticsoftware.elasticactors.serialization.Message;
 
 @Message(serializationFramework = JacksonSerializationFramework.class, durable = false)
-@Throttled(maxPerSecond = "${ea.broadcast.test.maxPerSecond}")
-public final class HelloProperty {
+@Throttled(maxPerSecond = "${some.missing.property:500}")
+public final class HelloThrottledMissingProperty {
 
     private final String message;
 
     @JsonCreator
-    public HelloProperty(@JsonProperty("message") String message) {
+    public HelloThrottledMissingProperty(@JsonProperty("message") String message) {
         this.message = message;
     }
 

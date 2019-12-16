@@ -52,7 +52,8 @@ import static java.lang.String.format;
 @Configurable
 public final class Broadcaster extends MethodActor {
     private static final Logger logger = LoggerFactory.getLogger(Broadcaster.class);
-    private static final Pattern EXPRESSION_PATTERN = Pattern.compile("^\\$\\{(.+)}$");
+    private static final Pattern EXPRESSION_PATTERN = Pattern.compile(
+            "^\\$\\{([^:]+)(?::([^:]+))?}$");
     private JacksonSerializationFramework serializationFramework;
     private Environment environment;
     private final Map<Class<?>, ThrottleConfig> throttleConfigCache = new ConcurrentHashMap<>();
@@ -94,7 +95,16 @@ public final class Broadcaster extends MethodActor {
             try {
                 Matcher m = EXPRESSION_PATTERN.matcher(throttled.maxPerSecond());
                 if (m.matches()) {
-                    throttleConfig = new ThrottleConfig(environment.getRequiredProperty(m.group(1), Integer.class));
+                    try {
+                        throttleConfig = new ThrottleConfig(environment.getRequiredProperty(m.group(1), Integer.class));
+                    } catch (IllegalStateException e) {
+                        String defaultValue = m.group(2);
+                        if (defaultValue != null) {
+                            throttleConfig = new ThrottleConfig(Integer.parseInt(defaultValue));
+                        } else {
+                            throw e;
+                        }
+                    }
                 } else {
                     throttleConfig = new ThrottleConfig(Integer.parseInt(throttled.maxPerSecond()));
                 }
