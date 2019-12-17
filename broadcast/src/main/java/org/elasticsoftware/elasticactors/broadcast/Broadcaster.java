@@ -19,18 +19,24 @@ import org.elasticsoftware.elasticactors.broadcast.messages.Throttled;
 import org.elasticsoftware.elasticactors.broadcast.messages.ThrottledMessage;
 import org.elasticsoftware.elasticactors.broadcast.messages.UpdateThrottleConfig;
 import org.elasticsoftware.elasticactors.broadcast.state.BroadcasterState;
+import org.elasticsoftware.elasticactors.broadcast.state.ThrottleConfig;
 import org.elasticsoftware.elasticactors.broadcast.state.ThrottledBroadcastSession;
 import org.elasticsoftware.elasticactors.state.PersistenceConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Configurable;
+import org.springframework.core.env.Environment;
 
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.google.common.collect.Sets.newHashSet;
 import static org.elasticsoftware.elasticactors.state.ActorLifecycleStep.CREATE;
@@ -46,7 +52,11 @@ import static java.lang.String.format;
 @Configurable
 public final class Broadcaster extends MethodActor {
     private static final Logger logger = LoggerFactory.getLogger(Broadcaster.class);
+    private static final Pattern EXPRESSION_PATTERN = Pattern.compile(
+            "^\\$\\{([^:]+)(?::([^:]+))?}$");
     private JacksonSerializationFramework serializationFramework;
+    private Environment environment;
+    private final Map<Class<?>, ThrottleConfig> throttleConfigCache = new ConcurrentHashMap<>();
 
     @Override
     public void postCreate(ActorRef creator) throws Exception {
@@ -73,6 +83,52 @@ public final class Broadcaster extends MethodActor {
                 getSystem().stop(actorRef);
             }
         }
+    }
+
+    private ThrottleConfig getThrottleConfig(Object message) {
+        return throttleConfigCache.computeIfAbsent(message.getClass(), this::resolveThrottleConfig);
+    }
+
+    private ThrottleConfig resolveThrottleConfig(Class<?> messageClass) {
+        ThrottleConfig throttleConfig = new ThrottleConfig(getMaxMessagesPerSecond(messageClass));
+        logger.debug(
+                "Resolved broadcast throttling config {} for class {}",
+                throttleConfig,
+                messageClass.getName());
+        return throttleConfig;
+    }
+
+    private int getMaxMessagesPerSecond(Class<?> messageClass) {
+        Throttled throttled = messageClass.getAnnotation(Throttled.class);
+        if (throttled != null) {
+            try {
+                Matcher m = EXPRESSION_PATTERN.matcher(throttled.maxPerSecond());
+                if (m.matches()) {
+                    try {
+                        return environment.getRequiredProperty(m.group(1), Integer.class);
+                    } catch (IllegalStateException e) {
+                        String defaultValue = m.group(2);
+                        if (defaultValue != null) {
+                            return Integer.parseInt(defaultValue);
+                        } else {
+                            throw e;
+                        }
+                    }
+                }
+                return Integer.parseInt(throttled.maxPerSecond());
+            } catch (Exception e) {
+                logger.error(
+                        "Could not parse throttling configuration for message class {}",
+                        messageClass.getName(),
+                        e);
+            }
+        }
+        return 0;
+    }
+
+    @Autowired
+    public void setEnvironment(Environment environment) {
+        this.environment = environment;
     }
 
     @Autowired
@@ -250,7 +306,7 @@ public final class Broadcaster extends MethodActor {
 
     private void throttle(ThrottledBroadcastSession session, BroadcasterState state, ActorSystem actorSystem) {
         // first calculate the delay
-        int maxPerSecond = session.getMessage().getThrottleConfig().getMaxMessagesPerSecond();
+        int maxPerSecond = session.getThrottleConfig().getMaxMessagesPerSecond();
         int maxPerBatch = state.getBucketSize();
 
         long delayInMillis = (long) ((1000.0d / maxPerSecond) * maxPerBatch);
@@ -302,17 +358,19 @@ public final class Broadcaster extends MethodActor {
             }
         } else {
             // see if we have a throttle config set
-            if (message instanceof Throttled && ((Throttled) message).getThrottleConfig() != null) {
+            ThrottleConfig throttleConfig = getThrottleConfig(message);
+            if (throttleConfig.isValid()) {
                 // create a new throttle session
                 ThrottledBroadcastSession throttledBroadcastSession = new ThrottledBroadcastSession(
-                        (Throttled) message,
-                        sender);
+                        message,
+                        sender,
+                        throttleConfig);
                 state.addThrottledBroadcastSession(throttledBroadcastSession);
                 logger.debug(
                         "Node [{}]: initiating throttled broadcast [{}] with {} messages/sec for message of type [{}]",
                         self.getActorId(),
                         throttledBroadcastSession.getId(),
-                        ((Throttled) message).getThrottleConfig().getMaxMessagesPerSecond(),
+                        throttleConfig.getMaxMessagesPerSecond(),
                         message.getClass().getName());
                 // and send a request to the nodes
                 LeafNodesRequest request = new LeafNodesRequest(throttledBroadcastSession.getId());

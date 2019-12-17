@@ -9,12 +9,13 @@ import org.elasticsoftware.elasticactors.serialization.Message;
  * @author Joost van de Wijgerd
  */
 @Message(serializationFramework = JacksonSerializationFramework.class, durable = false)
-public final class Hello {
+@Throttled(maxPerSecond = "500")
+public final class HelloThrottled {
 
     private final String message;
 
     @JsonCreator
-    public Hello(@JsonProperty("message") String message) {
+    public HelloThrottled(@JsonProperty("message") String message) {
         this.message = message;
     }
 

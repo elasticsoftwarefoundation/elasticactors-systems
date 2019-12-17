@@ -1,17 +1,25 @@
 package org.elasticsoftware.elasticactors.broadcast.messages;
 
-import org.elasticsoftware.elasticactors.broadcast.state.ThrottleConfig;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * Interface that messages that are to be throttled have to implement. The message should provide
- * the manner in which it will be throttled using the {@link Throttled#getThrottleConfig()}
- * method.
+ * Annotation to tell the broadcaster to throttle messages of a given class
  */
-public interface Throttled {
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+public @interface Throttled {
 
     /**
-     * The throttling configuration to be used for the message
+     * The maximum number of messages per second. This can be an integer (represented as a string)
+     * or a property, similar to {@link org.springframework.beans.factory.annotation.Value}.
+     * <br/>
+     * <strong>Using a value <= 0 will disable throttling.</strong>
      */
-    ThrottleConfig getThrottleConfig();
+    String maxPerSecond();
 
 }
