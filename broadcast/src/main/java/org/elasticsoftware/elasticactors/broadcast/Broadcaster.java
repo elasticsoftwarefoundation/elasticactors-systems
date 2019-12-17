@@ -85,36 +85,45 @@ public final class Broadcaster extends MethodActor {
         }
     }
 
-    private ThrottleConfig getThrottleConfig(Class<?> messageClass) {
-        ThrottleConfig throttleConfig = throttleConfigCache.get(messageClass);
-        if (throttleConfig != null) {
-            return  throttleConfig;
-        }
+    private ThrottleConfig getThrottleConfig(Object message) {
+        return throttleConfigCache.computeIfAbsent(message.getClass(), this::resolveThrottleConfig);
+    }
+
+    private ThrottleConfig resolveThrottleConfig(Class<?> messageClass) {
+        ThrottleConfig throttleConfig = new ThrottleConfig(getMaxMessagesPerSecond(messageClass));
+        logger.debug(
+                "Resolved broadcast throttling config {} for class {}",
+                throttleConfig,
+                messageClass.getName());
+        return throttleConfig;
+    }
+
+    private int getMaxMessagesPerSecond(Class<?> messageClass) {
         Throttled throttled = messageClass.getAnnotation(Throttled.class);
         if (throttled != null) {
             try {
                 Matcher m = EXPRESSION_PATTERN.matcher(throttled.maxPerSecond());
                 if (m.matches()) {
                     try {
-                        throttleConfig = new ThrottleConfig(environment.getRequiredProperty(m.group(1), Integer.class));
+                        return environment.getRequiredProperty(m.group(1), Integer.class);
                     } catch (IllegalStateException e) {
                         String defaultValue = m.group(2);
                         if (defaultValue != null) {
-                            throttleConfig = new ThrottleConfig(Integer.parseInt(defaultValue));
+                            return Integer.parseInt(defaultValue);
                         } else {
                             throw e;
                         }
                     }
-                } else {
-                    throttleConfig = new ThrottleConfig(Integer.parseInt(throttled.maxPerSecond()));
                 }
-                throttleConfigCache.put(messageClass, throttleConfig);
-                return throttleConfig;
+                return Integer.parseInt(throttled.maxPerSecond());
             } catch (Exception e) {
-                logger.error("Could not parse throttling configuration for message class {}", messageClass.getName(), e);
+                logger.error(
+                        "Could not parse throttling configuration for message class {}",
+                        messageClass.getName(),
+                        e);
             }
         }
-        return null;
+        return 0;
     }
 
     @Autowired
@@ -349,8 +358,8 @@ public final class Broadcaster extends MethodActor {
             }
         } else {
             // see if we have a throttle config set
-            ThrottleConfig throttleConfig = getThrottleConfig(message.getClass());
-            if (throttleConfig != null) {
+            ThrottleConfig throttleConfig = getThrottleConfig(message);
+            if (throttleConfig.isValid()) {
                 // create a new throttle session
                 ThrottledBroadcastSession throttledBroadcastSession = new ThrottledBroadcastSession(
                         message,

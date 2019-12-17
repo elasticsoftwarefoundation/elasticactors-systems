@@ -17,6 +17,8 @@ public @interface Throttled {
     /**
      * The maximum number of messages per second. This can be an integer (represented as a string)
      * or a property, similar to {@link org.springframework.beans.factory.annotation.Value}.
+     * <br/>
+     * <strong>Using a value <= 0 will disable throttling.</strong>
      */
     String maxPerSecond();
 
