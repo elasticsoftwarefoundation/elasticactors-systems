@@ -8,8 +8,6 @@ import org.elasticsoftware.elasticactors.ServiceActor;
 import org.elasticsoftware.elasticactors.cluster.ClusterEventListener;
 import org.elasticsoftware.elasticactors.cluster.ClusterService;
 import org.elasticsoftware.elasticactors.masterservice.messages.MasterElected;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -22,10 +20,9 @@ public abstract class MasterService extends MethodActor implements ClusterEventL
     // @todo: we need this because leadership events are generated before the ElasticActors runtime is up
     private final AtomicReference<MasterElected> pendingMasterElected = new AtomicReference<>(null);
     private final AtomicBoolean activated = new AtomicBoolean(false);
-    private final Logger logger = LoggerFactory.getLogger(getClass());
-    private final ActorSystem actorSystem;
-    private final ClusterService clusterService;
-    private final ActorRef self;
+    protected final ActorSystem actorSystem;
+    protected final ClusterService clusterService;
+    protected final ActorRef self;
     private ActorRef masterRef;
 
     protected MasterService(ActorSystem actorSystem, ClusterService clusterService) {

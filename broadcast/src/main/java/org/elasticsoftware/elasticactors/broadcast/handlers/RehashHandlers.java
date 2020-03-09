@@ -3,22 +3,17 @@ package org.elasticsoftware.elasticactors.broadcast.handlers;
 import org.elasticsoftware.elasticactors.ActorRef;
 import org.elasticsoftware.elasticactors.MessageHandler;
 import org.elasticsoftware.elasticactors.MethodActor;
-import org.elasticsoftware.elasticactors.broadcast.Broadcaster;
 import org.elasticsoftware.elasticactors.broadcast.messages.Add;
 import org.elasticsoftware.elasticactors.broadcast.messages.rehash.InternalRehashRequest;
 import org.elasticsoftware.elasticactors.broadcast.messages.rehash.RehashComplete;
 import org.elasticsoftware.elasticactors.broadcast.messages.rehash.RehashRequest;
 import org.elasticsoftware.elasticactors.broadcast.messages.rehash.RehashResponse;
 import org.elasticsoftware.elasticactors.broadcast.state.BroadcasterState;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 
 public final class RehashHandlers extends MethodActor {
-
-    private static final Logger logger = LoggerFactory.getLogger(Broadcaster.class);
 
     @MessageHandler
     public void handle(RehashRequest rehashRequest, BroadcasterState state, ActorRef sender) {

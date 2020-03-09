@@ -22,8 +22,6 @@ import org.elasticsoftware.elasticactors.broadcast.state.BroadcasterState;
 import org.elasticsoftware.elasticactors.broadcast.state.ThrottleConfig;
 import org.elasticsoftware.elasticactors.broadcast.state.ThrottledBroadcastSession;
 import org.elasticsoftware.elasticactors.state.PersistenceConfig;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Configurable;
 import org.springframework.core.env.Environment;
@@ -51,7 +49,6 @@ import static java.lang.String.format;
 @MessageHandlers(RehashHandlers.class)
 @Configurable
 public final class Broadcaster extends MethodActor {
-    private static final Logger logger = LoggerFactory.getLogger(Broadcaster.class);
     private static final Pattern EXPRESSION_PATTERN = Pattern.compile(
             "^\\$\\{([^:]+)(?::([^:]+))?}$");
     private JacksonSerializationFramework serializationFramework;
