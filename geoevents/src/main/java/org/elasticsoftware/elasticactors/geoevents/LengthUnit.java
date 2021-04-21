@@ -17,7 +17,7 @@
 package org.elasticsoftware.elasticactors.geoevents;
 
 /**
- * @author Joost van de Wijgerd <joost@vdwbv.com>
+ * @author Joost van de Wijgerd
  */
 public enum LengthUnit {
     MILES {

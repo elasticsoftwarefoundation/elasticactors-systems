@@ -39,6 +39,7 @@ public final class GeoLocation {
     /**
      * @param latitude the latitude, in degrees.
      * @param longitude the longitude, in degrees.
+     * @return a the GeoLocation corresponding to the latitude and longitude
      */
     public static GeoLocation fromDegrees(double latitude, double longitude) {
         GeoLocation result = new GeoLocation();
@@ -53,6 +54,7 @@ public final class GeoLocation {
     /**
      * @param latitude the latitude, in radians.
      * @param longitude the longitude, in radians.
+     * @return a the GeoLocation corresponding to the latitude and longitude
      */
     public static GeoLocation fromRadians(double latitude, double longitude) {
         GeoLocation result = new GeoLocation();
@@ -107,6 +109,7 @@ public final class GeoLocation {
     /**
      * Computes the great circle distance between this GeoLocation instance
      * and the location argument.
+     * @param location the location
      * @param radius the radius of the sphere, e.g. the average radius for a
      * spherical approximation of the figure of the Earth is approximately
      * 6371.01 kilometers.
