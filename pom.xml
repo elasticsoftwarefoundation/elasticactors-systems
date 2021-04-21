@@ -17,23 +17,55 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.elasticsoftware.elasticactors-systems</groupId>
+    <groupId>org.elasticsoftwarefoundation.elasticactors-systems</groupId>
     <artifactId>elasticactors-systems</artifactId>
     <version>2.4.1-SNAPSHOT</version>
+
     <packaging>pom</packaging>
-    <name>Elastic Software Foundation :: ElasticActors :: ElasticSystems</name>
+
+    <name>Elastic Software Foundation :: ElasticActors :: Systems</name>
+    <description>Current useful implementations (plugins / extensions) of Elastic Actors</description>
     <url>https://github.com/elasticsoftwarefoundation/elasticactors-systems</url>
+
+    <licenses>
+        <license>
+            <name>The Apache License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>Joost van de Wijgerd</name>
+            <email>jwijgerd@gmail.com</email>
+            <organization>Elastic Software Foundation</organization>
+            <organizationUrl>https://elasticsoftwarefoundation.org</organizationUrl>
+        </developer>
+        <developer>
+            <name>Andre Brait</name>
+            <email>andrebrait@gmail.com</email>
+            <organization>Elastic Software Foundation</organization>
+            <organizationUrl>https://elasticsoftwarefoundation.org</organizationUrl>
+        </developer>
+    </developers>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <elasticactors.version>2.4.0</elasticactors.version>
+        <elasticactors.version>3.0.0</elasticactors.version>
         <slf4j.version>1.7.30</slf4j.version>
-        <spring.version>5.2.4.RELEASE</spring.version>
+        <spring.version>5.2.7.RELEASE</spring.version>
+        <grizzly.version>2.4.4</grizzly.version>
+        <aspectj.version>1.9.5</aspectj.version>
+
+        <async-http-client.version>2.1.2</async-http-client.version>
+        <netty.version>3.10.6.Final</netty.version>
+        <netty4.version>4.1.45.Final</netty4.version>
+        <reactive-streams.version>1.0.3</reactive-streams.version>
 
         <!-- testing -->
-        <testng-version>6.14.3</testng-version>
-        <mockito.version>2.28.2</mockito.version>
+        <testng-version>7.1.0</testng-version>
+        <mockito.version>3.3.3</mockito.version>
     </properties>
 
     <scm>
@@ -45,71 +77,154 @@
         <tag>HEAD</tag>
     </scm>
 
-    <!--
-       http://veithen.blogspot.nl/2013/05/github-bintray-maven-release-plugin.html
-    -->
     <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
         <repository>
-            <id>bintray</id>
-            <name>elasticsoftwarefoundation-maven-org.elasticsoftware.elasticactors-systems</name>
-            <url>https://api.bintray.com/maven/elasticsoftwarefoundation/maven/org.elasticsoftware.elasticactors-systems</url>
+            <id>ossrh</id>
+            <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
         </repository>
     </distributionManagement>
 
-    <repositories>
-        <repository>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-            <id>elasticsoftwarefoundation</id>
-            <name>bintray</name>
-            <url>http://dl.bintray.com/elasticsoftwarefoundation/maven/</url>
-        </repository>
-    </repositories>
-    <pluginRepositories>
-        <pluginRepository>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-            <id>elasticsoftwarefoundation</id>
-            <name>bintray</name>
-            <url>http://dl.bintray.com/elasticsoftwarefoundation/maven/</url>
-        </pluginRepository>
-    </pluginRepositories>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-bom</artifactId>
+                <version>${netty4.version}</version>
+                <scope>import</scope>
+                <type>pom</type>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-core</artifactId>
+                <version>${spring.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.glassfish.grizzly</groupId>
+                <artifactId>grizzly-framework</artifactId>
+                <version>${grizzly.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>${slf4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-simple</artifactId>
+                <version>${slf4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.elasticsoftwarefoundation.elasticactors</groupId>
+                <artifactId>elasticactors-api</artifactId>
+                <version>${elasticactors.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.elasticsoftwarefoundation.elasticactors</groupId>
+                <artifactId>elasticactors-base</artifactId>
+                <version>${elasticactors.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.elasticsoftwarefoundation.elasticactors</groupId>
+                <artifactId>elasticactors-core</artifactId>
+                <version>${elasticactors.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.elasticsoftwarefoundation.elasticactors</groupId>
+                <artifactId>elasticactors-test</artifactId>
+                <version>${elasticactors.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.asynchttpclient</groupId>
+                <artifactId>async-http-client</artifactId>
+                <version>${async-http-client.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty</artifactId>
+                <version>${netty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.reactivestreams</groupId>
+                <artifactId>reactive-streams</artifactId>
+                <version>${reactive-streams.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-aspects</artifactId>
+                <version>${spring.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.aspectj</groupId>
+                        <artifactId>aspectjweaver</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.aspectj</groupId>
+                <artifactId>aspectjrt</artifactId>
+                <version>${aspectj.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.elasticsoftwarefoundation.elasticactors-systems</groupId>
+                <artifactId>elasticactors-broadcast-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.testng</groupId>
+                <artifactId>testng</artifactId>
+                <version>${testng-version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.yaml</groupId>
+                        <artifactId>snakeyaml</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-core</artifactId>
+                <version>${mockito.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-test</artifactId>
+                <version>${spring.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-            <version>${slf4j.version}</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
-            <version>${slf4j.version}</version>
             <scope>test</scope>
         </dependency>
 
         <!-- Common Elastic Actors -->
         <dependency>
-            <groupId>org.elasticsoftware.elasticactors</groupId>
+            <groupId>org.elasticsoftwarefoundation.elasticactors</groupId>
             <artifactId>elasticactors-api</artifactId>
-            <version>${elasticactors.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.elasticsoftware.elasticactors</groupId>
+            <groupId>org.elasticsoftwarefoundation.elasticactors</groupId>
             <artifactId>elasticactors-base</artifactId>
-            <version>${elasticactors.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.elasticsoftware.elasticactors</groupId>
+            <groupId>org.elasticsoftwarefoundation.elasticactors</groupId>
             <artifactId>elasticactors-core</artifactId>
-            <version>${elasticactors.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.elasticsoftware.elasticactors</groupId>
+            <groupId>org.elasticsoftwarefoundation.elasticactors</groupId>
             <artifactId>elasticactors-test</artifactId>
-            <version>${elasticactors.version}</version>
             <scope>test</scope>
         </dependency>
 
@@ -117,19 +232,16 @@
         <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
-            <version>${testng-version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>${mockito.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-test</artifactId>
-            <version>${spring.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -143,6 +255,18 @@
     </modules>
 
     <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <version>3.1.1</version>
+                    <configuration>
+                        <source>8</source>
+                        <excludePackageNames>org.elasticsoftware.elasticactors.serialization.protobuf:org.elasticsoftware.elasticactors.cluster.protobuf</excludePackageNames>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
         <resources>
             <resource>
                 <filtering>false</filtering>
@@ -184,6 +308,29 @@
                 </configuration>
             </plugin>
             <plugin>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>3.0.0-M3</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <rules>
+                        <requireMavenVersion>
+                            <version>3.0.5</version>
+                        </requireMavenVersion>
+                        <requireJavaVersion>
+                            <version>1.8</version>
+                        </requireJavaVersion>
+                        <banDuplicatePomDependencyVersions />
+                        <dependencyConvergence />
+                    </rules>
+                </configuration>
+            </plugin>
+            <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.22.2</version>
                 <configuration>
@@ -193,23 +340,6 @@
                     <threadCount>10</threadCount>
                     <reportFormat>plain</reportFormat>
                 </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-source-plugin</artifactId>
-                <version>3.1.0</version>
-                <executions>
-                    <execution>
-                        <id>attach-source</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                        <configuration>
-                            <attach>true</attach>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
@@ -280,8 +410,10 @@
                     </dependency>
                 </dependencies>
                 <configuration>
+                    <goals>install</goals>
+                    <!-- Prevents running the deploy goal during release:perform -->
                     <useReleaseProfile>false</useReleaseProfile>
-                    <releaseProfiles>release</releaseProfiles>
+                    <releaseProfiles>maven-release</releaseProfiles>
                     <autoVersionSubmodules>true</autoVersionSubmodules>
                     <tagNameFormat>v@{project.version}</tagNameFormat>
                     <!-- When running a release build from bamboo, maven forks the actual release build.
@@ -294,9 +426,56 @@
     </build>
     <profiles>
         <profile>
+            <id>maven-release</id>
+        </profile>
+        <profile>
+            <id>ci</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
             <id>release</id>
             <build>
                 <plugins>
+                    <plugin>
+                        <groupId>org.sonatype.plugins</groupId>
+                        <artifactId>nexus-staging-maven-plugin</artifactId>
+                        <version>1.6.7</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <serverId>ossrh</serverId>
+                            <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
+                            <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.simplify4u.plugins</groupId>
+                        <artifactId>sign-maven-plugin</artifactId>
+                        <version>0.3.1</version>
+                        <configuration>
+                            <skipNoKey>false</skipNoKey>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
                     <!-- attach sources -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
@@ -307,11 +486,22 @@
                                 <id>attach-source</id>
                                 <phase>package</phase>
                                 <goals>
-                                    <goal>jar</goal>
+                                    <goal>jar-no-fork</goal>
                                 </goals>
                                 <configuration>
                                     <attach>true</attach>
                                 </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
                             </execution>
                         </executions>
                     </plugin>

@@ -12,4 +12,7 @@ target/
 
 # Other stuff
 *.bat
+
 *.versionsBackup
+*.releaseBackup
+release.properties
