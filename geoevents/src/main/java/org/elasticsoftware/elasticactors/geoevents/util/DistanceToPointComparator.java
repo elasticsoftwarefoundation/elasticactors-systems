@@ -34,10 +34,10 @@ public class DistanceToPointComparator implements Comparator<GeoHash> {
 
     @Override
     public int compare(GeoHash one, GeoHash two) {
-        double oneDistance = center.distance(one.getBoundingBoxCenterPoint().getLatitude(),
-                                             one.getBoundingBoxCenterPoint().getLongitude(), LengthUnit.METRES);
-        double twoDistance = center.distance(two.getBoundingBoxCenterPoint().getLatitude(),
-                                             two.getBoundingBoxCenterPoint().getLongitude(), LengthUnit.METRES);
+        double oneDistance = center.distance(one.getBoundingBox().getCenter().getLatitude(),
+                                             one.getBoundingBox().getCenter().getLongitude(), LengthUnit.METRES);
+        double twoDistance = center.distance(two.getBoundingBox().getCenter().getLatitude(),
+                                             two.getBoundingBox().getCenter().getLongitude(), LengthUnit.METRES);
         if(oneDistance == twoDistance) {
             return 0;
         } else if(oneDistance < twoDistance) {

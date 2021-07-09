@@ -28,19 +28,11 @@
     <properties>
     </properties>
 
-    <repositories>
-        <repository>
-            <id>clojars.org</id>
-            <url>http://clojars.org/repo</url>
-        </repository>
-    </repositories>
-
     <dependencies>
-        <!-- geohash library from clojars -->
         <dependency>
-            <groupId>org.clojars.ndimiduk</groupId>
-            <artifactId>geohash-java</artifactId>
-            <version>1.0.6</version>
+            <groupId>ch.hsr</groupId>
+            <artifactId>geohash</artifactId>
+            <version>1.4.0</version>
         </dependency>
     </dependencies>
 </project>
