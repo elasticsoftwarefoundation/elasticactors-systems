@@ -46,10 +46,15 @@ import java.util.stream.StreamSupport;
  */
 @ServiceActor("httpClient")
 public final class HttpClientService extends TypedActor<HttpRequest> {
-    private static final Logger logger = LoggerFactory.getLogger(HttpClientService.class);
+    private static final Logger staticLogger = LoggerFactory.getLogger(HttpClientService.class);
     private AsyncHttpClient httpClient;
 
     public HttpClientService() {
+    }
+
+    @Override
+    protected Logger initLogger() {
+        return staticLogger;
     }
 
     @PostConstruct
@@ -114,7 +119,7 @@ public final class HttpClientService extends TypedActor<HttpRequest> {
         @Override
         public void onThrowable(Throwable t) {
             // @todo: send message back to replyAddress
-            logger.error("Exception getting response",t);
+            staticLogger.error("Exception getting response",t);
         }
     }
 }

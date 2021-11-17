@@ -23,6 +23,8 @@ import org.elasticsoftware.elasticactors.TypedActor;
 import org.elasticsoftware.elasticactors.base.state.JacksonActorState;
 import org.elasticsoftware.elasticactors.geoevents.messages.ScanRequest;
 import org.elasticsoftware.elasticactors.geoevents.messages.ScanResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.LinkedList;
 
@@ -33,6 +35,9 @@ import java.util.LinkedList;
  */
 @TempActor(stateClass = Scanner.State.class)
 public final class Scanner extends TypedActor<ScanResponse> {
+
+    private final static Logger staticLogger = LoggerFactory.getLogger(Scanner.class);
+
     public static final class State extends JacksonActorState<State> {
         private final ActorRef replyAddress;
         private final ScanRequest request;
@@ -65,6 +70,11 @@ public final class Scanner extends TypedActor<ScanResponse> {
             // terminate
             getSystem().stop(getSelf());
         }
+    }
+
+    @Override
+    protected Logger initLogger() {
+        return staticLogger;
     }
 
     @Override

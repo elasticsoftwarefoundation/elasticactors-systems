@@ -22,8 +22,14 @@ import org.elasticsoftware.elasticactors.ServiceActor;
 import org.elasticsoftware.elasticactors.UntypedActor;
 import org.elasticsoftware.elasticactors.geoevents.Coordinate;
 import org.elasticsoftware.elasticactors.geoevents.LengthUnit;
-import org.elasticsoftware.elasticactors.geoevents.messages.*;
+import org.elasticsoftware.elasticactors.geoevents.messages.DeRegisterInterest;
+import org.elasticsoftware.elasticactors.geoevents.messages.PublishLocation;
+import org.elasticsoftware.elasticactors.geoevents.messages.RegisterInterest;
+import org.elasticsoftware.elasticactors.geoevents.messages.ScanRequest;
+import org.elasticsoftware.elasticactors.geoevents.messages.UnpublishLocation;
 import org.elasticsoftware.elasticactors.geoevents.util.GeoHashUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
@@ -32,6 +38,9 @@ import java.util.List;
  */
 @ServiceActor("geoEventsService")
 public final class GeoEventsService extends UntypedActor {
+
+    private final static Logger staticLogger = LoggerFactory.getLogger(GeoEventsService.class);
+
     public static final String REGIONS_FORMAT = "regions/%s";
 
     @Override
@@ -102,6 +111,11 @@ public final class GeoEventsService extends UntypedActor {
                                                         (double) radiusInMetres,
                                                         LengthUnit.METRES,
                                                         3);
+    }
+
+    @Override
+    protected Logger initLogger() {
+        return staticLogger;
     }
 
     @Override

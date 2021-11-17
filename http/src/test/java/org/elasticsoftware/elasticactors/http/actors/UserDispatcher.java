@@ -29,7 +29,12 @@ import org.slf4j.LoggerFactory;
  */
 @ServiceActor("userDispatcher")
 public final class UserDispatcher extends TypedActor<HttpRequest> {
-    private static final Logger logger = LoggerFactory.getLogger(UserDispatcher.class);
+    private static final Logger staticLogger = LoggerFactory.getLogger(UserDispatcher.class);
+
+    @Override
+    protected Logger initLogger() {
+        return staticLogger;
+    }
 
     @Override
     public void postActivate(String previousVersion) throws Exception {

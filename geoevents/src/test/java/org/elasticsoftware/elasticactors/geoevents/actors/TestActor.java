@@ -20,15 +20,25 @@ import org.elasticsoftware.elasticactors.ActorRef;
 import org.elasticsoftware.elasticactors.TempActor;
 import org.elasticsoftware.elasticactors.UntypedActor;
 import org.elasticsoftware.elasticactors.geoevents.Receiver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Joost van de Wijgerd
  */
 @TempActor(stateClass = Receiver.class)
 public final class TestActor extends UntypedActor {
+
+    private final static Logger staticLogger = LoggerFactory.getLogger(TestActor.class);
+
     @Override
     public void onReceive(ActorRef sender, Object message) throws Exception {
         Receiver receiver = getState(Receiver.class);
         receiver.onReceive(sender,message);
+    }
+
+    @Override
+    protected Logger initLogger() {
+        return staticLogger;
     }
 }

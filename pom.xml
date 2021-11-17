@@ -52,15 +52,15 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <elasticactors.version>4.0.2</elasticactors.version>
-        <slf4j.version>1.7.30</slf4j.version>
-        <spring.version>5.3.6</spring.version>
+        <elasticactors.version>5.0.2</elasticactors.version>
+        <slf4j.version>1.7.32</slf4j.version>
+        <spring.version>5.3.12</spring.version>
         <grizzly.version>2.4.4</grizzly.version>
-        <aspectj.version>1.9.6</aspectj.version>
+        <aspectj.version>1.9.7</aspectj.version>
 
         <async-http-client.version>2.1.2</async-http-client.version>
         <netty.version>3.10.6.Final</netty.version>
-        <netty4.version>4.1.65.Final</netty4.version>
+        <netty4.version>4.1.70.Final</netty4.version>
         <reactive-streams.version>1.0.3</reactive-streams.version>
         <guava.version>30.1.1-jre</guava.version>
 

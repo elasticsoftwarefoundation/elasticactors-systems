@@ -37,7 +37,12 @@ import java.util.Map;
  */
 @Actor(serializationFramework = JacksonSerializationFramework.class)
 public final class User extends TypedActor<HttpRequest> {
-    private static final Logger logger = LoggerFactory.getLogger(User.class);
+    private static final Logger staticLogger = LoggerFactory.getLogger(User.class);
+
+    @Override
+    protected Logger initLogger() {
+        return staticLogger;
+    }
 
     @Override
     public void postActivate(String previousVersion) throws Exception {

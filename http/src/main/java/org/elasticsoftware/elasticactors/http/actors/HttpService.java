@@ -47,7 +47,7 @@ import java.util.concurrent.Executors;
 // @todo: need to make sure spring can take the name from ServiceActor annotation
 @ServiceActor("httpServer")
 public final class HttpService extends UntypedActor {
-    private static final Logger logger = LoggerFactory.getLogger(HttpService.class);
+    private static final Logger staticLogger = LoggerFactory.getLogger(HttpService.class);
     private final ConcurrentMap<String,ActorRef> routes = new ConcurrentHashMap<>();
     private final PathMatcher pathMatcher = new AntPathMatcher();
     private final ActorSystem actorSystem;
@@ -126,5 +126,10 @@ public final class HttpService extends UntypedActor {
             return routes.get(bestPatternMatch);
         }
         return null;
+    }
+
+    @Override
+    protected Logger initLogger() {
+        return staticLogger;
     }
 }

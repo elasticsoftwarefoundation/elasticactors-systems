@@ -49,6 +49,7 @@ import static java.lang.String.format;
 @MessageHandlers(RehashHandlers.class)
 @Configurable
 public final class Broadcaster extends MethodActor {
+
     private static final Pattern EXPRESSION_PATTERN = Pattern.compile(
             "^\\$\\{([^:]+)(?::([^:]+))?}$");
     private JacksonSerializationFramework serializationFramework;
@@ -328,7 +329,8 @@ public final class Broadcaster extends MethodActor {
                         session.getMessage().getClass().getName(),
                         leafNode.getActorId(),
                         messageDelay);
-                actorSystem.getScheduler().scheduleOnce(self, message, leafNode, messageDelay, TimeUnit.MILLISECONDS);
+                actorSystem.getScheduler()
+                    .scheduleOnce(message, leafNode, messageDelay, TimeUnit.MILLISECONDS);
                 count += 1;
             }
         } catch(Exception e) {

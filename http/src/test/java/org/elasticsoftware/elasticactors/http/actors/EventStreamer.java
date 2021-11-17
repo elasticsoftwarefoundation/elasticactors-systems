@@ -35,7 +35,12 @@ import java.util.concurrent.TimeUnit;
  */
 @Actor(serializationFramework = JacksonSerializationFramework.class)
 public final class EventStreamer extends UntypedActor {
-    private static final Logger logger = LoggerFactory.getLogger(EventStreamer.class);
+    private static final Logger staticLogger = LoggerFactory.getLogger(EventStreamer.class);
+
+    @Override
+    protected Logger initLogger() {
+        return staticLogger;
+    }
 
     @Override
     public void postActivate(String previousVersion) throws Exception {
@@ -50,7 +55,7 @@ public final class EventStreamer extends UntypedActor {
             handle(sender,(HttpRequest) message);
         } else if(message instanceof String) {
             sender.tell(new ServerSentEvent("testing","event", Collections.singletonList((String) message),null),getSelf());
-            getSystem().getScheduler().scheduleOnce(sender,("Ping".equals(message)) ? "Pong" : "Ping",getSelf(),10, TimeUnit.SECONDS);
+            getSystem().getScheduler().scheduleOnce(("Ping".equals(message)) ? "Pong" : "Ping",getSelf(),10, TimeUnit.SECONDS);
         }
     }
 
@@ -59,6 +64,6 @@ public final class EventStreamer extends UntypedActor {
         // start streaming events
         sender.tell(new SseResponse(),getSelf());
         // schedule the next event
-        getSystem().getScheduler().scheduleOnce(sender,"Ping",getSelf(),10, TimeUnit.SECONDS);
+        getSystem().getScheduler().scheduleOnce("Ping",getSelf(),10, TimeUnit.SECONDS);
     }
 }

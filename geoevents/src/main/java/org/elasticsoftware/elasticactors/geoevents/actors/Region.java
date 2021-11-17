@@ -26,10 +26,25 @@ import org.elasticsoftware.elasticactors.UntypedActor;
 import org.elasticsoftware.elasticactors.base.serialization.JacksonSerializationFramework;
 import org.elasticsoftware.elasticactors.base.state.JacksonActorState;
 import org.elasticsoftware.elasticactors.geoevents.LengthUnit;
-import org.elasticsoftware.elasticactors.geoevents.messages.*;
+import org.elasticsoftware.elasticactors.geoevents.messages.DeRegisterInterest;
+import org.elasticsoftware.elasticactors.geoevents.messages.EnterEvent;
+import org.elasticsoftware.elasticactors.geoevents.messages.LeaveEvent;
+import org.elasticsoftware.elasticactors.geoevents.messages.PublishLocation;
+import org.elasticsoftware.elasticactors.geoevents.messages.RegisterInterest;
+import org.elasticsoftware.elasticactors.geoevents.messages.ScanRequest;
+import org.elasticsoftware.elasticactors.geoevents.messages.ScanResponse;
+import org.elasticsoftware.elasticactors.geoevents.messages.UnpublishLocation;
 import org.elasticsoftware.elasticactors.geoevents.util.GeoHashUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -37,8 +52,17 @@ import java.util.concurrent.TimeUnit;
  */
 @Actor(stateClass = Region.State.class, serializationFramework = JacksonSerializationFramework.class)
 public final class Region extends UntypedActor {
+
+    private final static Logger staticLogger = LoggerFactory.getLogger(Region.class);
+
+    @Override
+    protected Logger initLogger() {
+        return staticLogger;
+    }
+
     @JsonTypeName()
     public static final class State extends JacksonActorState<Region.State> {
+
         private final GeoHash geoHash;
         private final List<RegisterInterest> listeners;
         private final SortedMap<Long,PublishLocation> publishedLocations;

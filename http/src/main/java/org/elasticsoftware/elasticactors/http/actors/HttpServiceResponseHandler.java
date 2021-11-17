@@ -32,6 +32,8 @@ import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.jboss.netty.handler.codec.http.HttpVersion;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.jboss.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
@@ -40,6 +42,9 @@ import static org.jboss.netty.handler.codec.http.HttpVersion.HTTP_1_1;
  */
 @TempActor(stateClass = HttpServiceResponseHandler.State.class)
 public final class HttpServiceResponseHandler extends UntypedActor {
+
+    private final static Logger staticLogger = LoggerFactory.getLogger(HttpServiceResponseHandler.class);
+
     public static final class State implements ActorState<State> {
         private transient final Channel responseChannel;
         private boolean serverSentEvents = false;
@@ -108,6 +113,11 @@ public final class HttpServiceResponseHandler extends UntypedActor {
         State state = getState(State.class);
         // send the event to the netty stack
         state.getResponseChannel().write(message);
+    }
+
+    @Override
+    protected Logger initLogger() {
+        return staticLogger;
     }
 
     @Override
