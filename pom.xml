@@ -52,7 +52,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <elasticactors.version>4.0.2</elasticactors.version>
+        <elasticactors.version>4.1.0</elasticactors.version>
         <slf4j.version>1.7.30</slf4j.version>
         <spring.version>5.3.6</spring.version>
         <grizzly.version>2.4.4</grizzly.version>
