@@ -51,7 +51,7 @@ jobs:
         --file pom.xml
         --settings $GITHUB_WORKSPACE/settings.xml
         verify
-    - name: Build with Maven
+    - name: Publish to Maven Central
       run: >
         mvn
         --show-version
