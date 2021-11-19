@@ -51,6 +51,9 @@ jobs:
         --file pom.xml
         --settings $GITHUB_WORKSPACE/settings.xml
         verify
+      env:
+        SIGN_KEY: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
+        SIGN_KEY_PASS: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
     - name: Publish to Maven Central
       run: >
         mvn
