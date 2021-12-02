@@ -9,6 +9,14 @@ Current useful implementations (plugins / extensions) of Elastic Actors
 [![License: Apache 2](https://img.shields.io/badge/LICENSE-Apache2-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0.txt)
 [![Maven Central](https://img.shields.io/maven-central/v/org.elasticsoftwarefoundation.elasticactors-systems/elasticactors-systems.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22org.elasticsoftwarefoundation.elasticactors-systems%22)
 
+### Notes on versioning
+
+This project gets updated when there are breaking changes on Elastic Actors.
+
+Since these only happen in major and minor version changes, it's important to keep them in sync, 
+if an equivalent version is available. If a version is not available, using the most recent 
+version is generally safe.
+
 ### Release process
 
 This project uses the Maven Release Plugin and GitHub Actions to create releases.\
