@@ -61,7 +61,7 @@ public final class Region extends UntypedActor {
     }
 
     @JsonTypeName()
-    public static final class State extends JacksonActorState<Region.State> {
+    public static final class State extends JacksonActorState {
 
         private final GeoHash geoHash;
         private final List<RegisterInterest> listeners;
@@ -69,11 +69,6 @@ public final class Region extends UntypedActor {
 
         public State(GeoHash geoHash) {
             this(geoHash, new LinkedList<>(), new TreeMap<>());
-        }
-
-        @Override
-        public State getBody() {
-            return this;
         }
 
         @JsonCreator

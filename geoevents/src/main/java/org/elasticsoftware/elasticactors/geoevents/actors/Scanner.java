@@ -38,7 +38,7 @@ public final class Scanner extends TypedActor<ScanResponse> {
 
     private final static Logger staticLogger = LoggerFactory.getLogger(Scanner.class);
 
-    public static final class State extends JacksonActorState<State> {
+    public static final class State extends JacksonActorState {
         private final ActorRef replyAddress;
         private final ScanRequest request;
         private final ScanResponse response;
@@ -49,11 +49,6 @@ public final class Scanner extends TypedActor<ScanResponse> {
             this.request = request;
             this.runningRequests = runningRequests;
             this.response = new ScanResponse(request.getId(), new LinkedList<>());
-        }
-
-        @Override
-        public State getBody() {
-            return this;
         }
     }
 

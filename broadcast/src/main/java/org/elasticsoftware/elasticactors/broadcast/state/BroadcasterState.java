@@ -24,7 +24,7 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
  */
 @JsonInclude(NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public final class BroadcasterState extends JacksonActorState<BroadcasterState> {
+public final class BroadcasterState extends JacksonActorState {
 
     private final int bucketsPerNode;
     private final int bucketSize;
@@ -79,11 +79,6 @@ public final class BroadcasterState extends JacksonActorState<BroadcasterState> 
         this.leaves = leaves;
         this.size = size;
         this.throttleConfig = throttleConfig;
-    }
-
-    @Override
-    public BroadcasterState getBody() {
-        return this;
     }
 
     public int getBucketsPerNode() {
