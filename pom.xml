@@ -54,7 +54,7 @@
 
         <elasticactors.version>6.1.1</elasticactors.version>
         <slf4j.version>1.7.32</slf4j.version>
-        <spring.version>5.3.12</spring.version>
+        <spring.version>5.3.27</spring.version>
         <grizzly.version>2.4.4</grizzly.version>
         <aspectj.version>1.9.7</aspectj.version>
 
